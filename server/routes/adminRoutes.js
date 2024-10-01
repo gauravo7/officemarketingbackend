@@ -7,6 +7,7 @@ const roleAndPermissionController = require('../apis/roleAndPermission/roleAndPe
 const categoryController = require('../apis/category/categoryController')
 const taskController = require('../apis/task/taskController')
 const proofController = require('../apis/proof/proofController')
+const transactionController = require('../apis/transaction/transactionController')
 
 /** AUTHENTICATION */
 router.post('/login', userController.login)
@@ -48,6 +49,13 @@ router.post('/proof/verify', proofController.verifyProof)
 router.post('/proof/all', proofController.index)
 router.post('/proof/single', proofController.fetchProofById)
 router.delete('/proof/delete', proofController.deleteProof)
+
+
+
+
+// Transactions
+
+router.post('/transaction/add', transactionController.addTransaction)
 
 
 module.exports = router

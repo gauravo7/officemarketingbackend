@@ -1,4 +1,5 @@
 const Proof = require('./proofModel')
+const Customer = require('../customer/customerModel')
 const Task = require('../task/taskModel')
 const Joi = require('joi')
 const helper = require('../../utilities/helper')
@@ -73,10 +74,10 @@ function addProofFun(req, next) {
                                 proof.userId = formData.userId;
                                 proof.comments = formData.comments || '';
                                 proof.feedback = formData.feedback || '';
-                               
+
                                 proof.attachments = req.files.map(file => "attachments/" + file.filename);
-                                
-                   
+
+
                                 proof.trimAttachments = req.body.trimAttachments.map(trimFile => "attachments/" + trimFile);
 
                                 if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
@@ -117,42 +118,62 @@ function verifyProofFun(req, next) {
     return new Promise((resolve, reject) => {
         if (formData && formData._id) {
             if (db.isValid(formData._id)) {
+                
+              
+                if (formData.hasVerified === undefined || (formData.hasVerified !== 'true' && formData.hasVerified !== 'false')) {
+                    reject("Please provide a valid value for hasVerified (true or false).");
+                    return;
+                }
 
                 Proof.findOne({ "_id": formData._id })
-                    .then(async res => {
-                        if (!res) {
+                    .then(async proofData => {
+                        if (!proofData) {
                             reject("Proof not found");
                         } else {
+                            if (formData.hasVerified === 'false') {
+                                proofData.submissionStatus = 2; // in progress
+                                proofData.hasVerified = false; // Set hasVerified as false
 
-                            if (formData.hasVerified == 'false') {
-                                res.submissionStatus = 2; // inprogress
-                                res.hasVerified = formData.hasVerified;
+                                if (formData.verificationComments !== undefined) {
+                                    proofData.verificationComments = formData.verificationComments;
+                                    proofData.submissionStatus = 3; // verification pending
+                                }
+
+                            } else if (formData.hasVerified === 'true') {
+                      
+                                await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
+                                    if (!taskData) {
+                                        reject("Task not found");
+                                    } else {
+                                        await Customer.findOne({ userId: proofData.userId, isDelete: false }).then(async (userData) => {
+                                            if (!userData) {
+                                                reject("User not found");
+                                            } else {
+                                                proofData.verificationComments = formData.verificationComments || '';
+                                                proofData.submissionStatus = 4; // submission completed
+                                                proofData.hasVerified = true; // Set hasVerified as true
+
+                                      
+                                                userData.balance += taskData.price;
+                                                userData.totalEarned += taskData.price;
+
+                                                await userData.save(); 
+                                            }
+                                        }).catch(err => {
+                                            reject("Error while finding user: " + err.message);
+                                        });
+                                    }
+                                }).catch(err => {
+                                    reject("Error while finding task: " + err.message);
+                                });
                             }
 
-                            if (formData.verificationComments !== undefined && formData.hasVerified == 'false') {
-                                res.verificationComments = formData.verificationComments;
-                                res.submissionStatus = 3;
-                                res.hasVerified = formData.hasVerified;
-                            }
+             
+                            if (req.decoded.updatedById) proofData.updatedById = req.decoded.updatedById;
+                            proofData.updatedAt = new Date();
 
-
-                            if (formData.verificationComments !== undefined && formData.hasVerified == 'true') {
-                                res.verificationComments = formData.verificationComments;
-                                res.submissionStatus = 4;
-                                res.hasVerified = formData.hasVerified;
-                            }
-
-
-                            if (formData.hasVerified == 'true') {
-
-                                res.submissionStatus = 4;
-                                res.hasVerified = formData.hasVerified;
-                            }
-
-                            if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
-                            res.updatedAt = new Date();
-
-                            res.save()
+                            // Save the proof data
+                            proofData.save()
                                 .then(updatedRes => {
                                     resolve({
                                         status: 200,
@@ -161,15 +182,19 @@ function verifyProofFun(req, next) {
                                         data: updatedRes
                                     });
                                 })
-                                .catch(next);
+                                .catch(err => {
+                                    reject("Error while saving proof: " + err.message);
+                                });
                         }
                     })
-                    .catch(next);
+                    .catch(err => {
+                        reject("Error while finding proof: " + err.message);
+                    });
             } else {
                 reject("Invalid ID format");
             }
         } else {
-            reject("Please provide an _id to proceed");
+            reject("Please provide an _id to proceed.");
         }
     });
 }
@@ -326,21 +351,21 @@ function updateProofFun(req, next) {
                             } else if (res.hasVerified === true) {
                                 reject("Proof cannot be updated, it has already been verified.");
                             } else {
-                              
+
                                 if (!!formData.comments) res.comments = formData.comments;
                                 if (!!formData.feedback) res.feedback = formData.feedback;
 
                                 const index = parseInt(formData.index, 10);
 
                                 if (!isNaN(index)) {
-                                 
+
                                     if (formData.attachments && index >= 0 && index < res.attachments.length) {
                                         res.attachments[index] = "attachments/" + formData.attachments; // 
                                     } else if (formData.attachments) {
                                         reject("Invalid attachment index provided.");
                                     }
 
-                                   
+
                                     if (formData.trimAttachments && index >= 0 && index < res.trimAttachments.length) {
                                         res.trimAttachments[index] = "attachments/" + formData.trimAttachments;
                                     } else if (formData.trimAttachments) {
@@ -350,7 +375,7 @@ function updateProofFun(req, next) {
                                     reject("Invalid index provided.");
                                 }
 
-                             
+
                                 if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
                                 res.updatedAt = new Date();
 
