@@ -1,5 +1,6 @@
 const Proof = require('./proofModel')
 const Customer = require('../customer/customerModel')
+const Transaction = require('../transaction/transactionModel')
 const Task = require('../task/taskModel')
 const Joi = require('joi')
 const helper = require('../../utilities/helper')
@@ -118,29 +119,28 @@ function verifyProofFun(req, next) {
     return new Promise((resolve, reject) => {
         if (formData && formData._id) {
             if (db.isValid(formData._id)) {
-                
-              
                 if (formData.hasVerified === undefined || (formData.hasVerified !== 'true' && formData.hasVerified !== 'false')) {
                     reject("Please provide a valid value for hasVerified (true or false).");
                     return;
                 }
-
+                if (formData.submissionStatus == undefined) {
+                    reject("Submission status is required");
+                    return;
+                }
                 Proof.findOne({ "_id": formData._id })
                     .then(async proofData => {
                         if (!proofData) {
                             reject("Proof not found");
                         } else {
-                            if (formData.hasVerified === 'false') {
-                                proofData.submissionStatus = 2; // in progress
-                                proofData.hasVerified = false; // Set hasVerified as false
 
-                                if (formData.verificationComments !== undefined) {
-                                    proofData.verificationComments = formData.verificationComments;
-                                    proofData.submissionStatus = 3; // verification pending
-                                }
-
-                            } else if (formData.hasVerified === 'true') {
-                      
+                            if (formData.hasVerified === 'false' && formData.submissionStatus === 2 || formData.submissionStatus === "2") {
+                                proofData.submissionStatus = 2; //inProgress
+                                proofData.hasVerified = false;
+                            } else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
+                                proofData.verificationComments = formData.verificationComments;
+                                proofData.submissionStatus = 3; //resubmission
+                                proofData.hasVerified = false;
+                            } else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
                                 await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
                                     if (!taskData) {
                                         reject("Task not found");
@@ -149,15 +149,34 @@ function verifyProofFun(req, next) {
                                             if (!userData) {
                                                 reject("User not found");
                                             } else {
-                                                proofData.verificationComments = formData.verificationComments || '';
-                                                proofData.submissionStatus = 4; // submission completed
-                                                proofData.hasVerified = true; // Set hasVerified as true
 
-                                      
+                                                proofData.verificationComments = formData.verificationComments || '';
+                                                proofData.submissionStatus = 4; //closed
+                                                proofData.hasVerified = true;
+
                                                 userData.balance += taskData.price;
                                                 userData.totalEarned += taskData.price;
 
-                                                await userData.save(); 
+                                                await userData.save().then(async () => {
+
+                                                    await Transaction.countDocuments()
+                                                        .then(total => {
+                                                            var transaction = new Transaction();
+                                                            transaction.transactionAutoId = total + 1;
+                                                            transaction.userId = proofData.userId;
+                                                            transaction.type = "credit";
+                                                            transaction.amount = taskData.price;
+                                                            transaction.taskId = taskData._id;
+                                                            transaction.proofId = proofData._id;
+                                                            transaction.remarks = formData.remarks;
+                                                            if (req.decoded.addedById) transaction.addedById = req.decoded.addedById;
+
+                                                            transaction.save()
+
+                                                        });
+                                                });
+
+
                                             }
                                         }).catch(err => {
                                             reject("Error while finding user: " + err.message);
@@ -166,25 +185,47 @@ function verifyProofFun(req, next) {
                                 }).catch(err => {
                                     reject("Error while finding task: " + err.message);
                                 });
+                            } else {
+                                reject("Invalid submission status for the provided hasVerified value.");
                             }
 
-             
                             if (req.decoded.updatedById) proofData.updatedById = req.decoded.updatedById;
                             proofData.updatedAt = new Date();
 
                             // Save the proof data
-                            proofData.save()
-                                .then(updatedRes => {
-                                    resolve({
-                                        status: 200,
-                                        success: true,
-                                        message: "Proof verification updated successfully.",
-                                        data: updatedRes
+
+                            if (formData.hasVerified == 'true' && formData.submissionStatus === "4") {
+                                proofData.save()
+                                    .then(updatedRes => {
+                                        resolve({
+                                            status: 200,
+                                            success: true,
+                                            message: "Proof verified, transaction recorded successfully.",
+                                            data: updatedRes
+                                        });
+                                    })
+                                    .catch(err => {
+                                        reject("Error while saving proof: " + err.message);
                                     });
-                                })
-                                .catch(err => {
-                                    reject("Error while saving proof: " + err.message);
-                                });
+                            }
+                            else {
+                                proofData.save()
+                                    .then(updatedRes => {
+                                        resolve({
+                                            status: 200,
+                                            success: true,
+                                            message: "Proof verification updated successfully.",
+                                            data: updatedRes
+                                        });
+                                    })
+                                    .catch(err => {
+                                        reject("Error while saving proof: " + err.message);
+                                    });
+                            }
+
+
+
+
                         }
                     })
                     .catch(err => {
@@ -198,6 +239,7 @@ function verifyProofFun(req, next) {
         }
     });
 }
+
 
 
 
@@ -348,7 +390,11 @@ function updateProofFun(req, next) {
                         } else {
                             if (res.submissionStatus === 4) {
                                 reject("Proof cannot be updated, submission is closed.");
-                            } else if (res.hasVerified === true) {
+                            }
+                            else if (res.submissionStatus === 2) {
+                                reject("Proof cannot be updated, submission is in progress.");
+                            }
+                            else if (res.hasVerified === true) {
                                 reject("Proof cannot be updated, it has already been verified.");
                             } else {
 

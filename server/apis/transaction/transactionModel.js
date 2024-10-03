@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const transactionSchema = new Schema({
+    transactionAutoId: { type: Number, default: 0 },
     userId: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true
     },
@@ -15,13 +16,13 @@ const transactionSchema = new Schema({
         type: Date, default: Date.now
     },
     taskId: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'Task', required: false
+        type: mongoose.Schema.Types.ObjectId, ref: 'Task'
     },
     proofId: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'Proof', required: false
+        type: mongoose.Schema.Types.ObjectId, ref: 'Proof'
     },
     status: {
-        type: String, required: true
+        type: Boolean, default: true
     },
     remarks: {
         type: String,
@@ -30,7 +31,7 @@ const transactionSchema = new Schema({
         type: Date, default: Date.now
     },
     addedById: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false
+        type: mongoose.Schema.Types.ObjectId, ref: 'User'
     },
     isDelete: {
         type: Boolean, default: false
@@ -39,7 +40,7 @@ const transactionSchema = new Schema({
         type: Boolean, default: false
     },
     updatedById: {
-        type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false
+        type: mongoose.Schema.Types.ObjectId, ref: 'User'
     }
 }, { timestamps: true });
 
