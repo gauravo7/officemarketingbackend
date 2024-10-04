@@ -35,11 +35,11 @@ async function addProof(req, res, next) {
 function addProofFun(req, next) {
     return new Promise(async (resolve, reject) => {
         const formData = req.body;
+
         const createSchema = Joi.object().keys({
             taskId: Joi.string().required(),
             userId: Joi.string().required(),
-            comments: Joi.string().optional(),
-            feedback: Joi.string().optional(),
+            comment: Joi.string().optional(),
             attachments: Joi.alternatives().try(
                 Joi.array().items(Joi.string().required()).min(1),
                 Joi.string()
@@ -75,12 +75,23 @@ function addProofFun(req, next) {
                                 proof.proofAutoId = total + 1;
                                 proof.taskId = formData.taskId;
                                 proof.userId = formData.userId;
-                                proof.comments = formData.comments || '';
-                                proof.feedback = formData.feedback || '';
+
+                                if (formData.comment) {
+                                    comment = [
+                                        {
+                                            comment: formData.comment,
+                                            userId: formData.userId,
+                                            createdAt: new Date()
+                                        }
+                                    ]
+                                }
+                                else {
+                                    comment = []
+                                }
+                                proof.comments = comment;
+
 
                                 proof.attachments = req.files.map(file => "attachments/" + file.filename);
-
-
                                 proof.trimAttachments = req.body.trimAttachments.map(trimFile => "attachments/" + trimFile);
 
                                 if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
@@ -140,11 +151,23 @@ function verifyProofFun(req, next) {
                             if (formData.hasVerified === 'false' && formData.submissionStatus === 2 || formData.submissionStatus === "2") {
                                 proofData.submissionStatus = 2; //inProgress
                                 proofData.hasVerified = false;
-                            } else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
-                                proofData.verificationComments = formData.verificationComments;
+                            }
+                            else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
+
+
+                                if (formData.comment) {
+                                    proofData.comments.push({
+                                        comment: formData.comment,
+                                        userId: req.decoded.updatedById,
+                                        createdAt: new Date()
+                                    })
+                                }
+                          
+
                                 proofData.submissionStatus = 3; //resubmission
                                 proofData.hasVerified = false;
-                            } else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
+                            }
+                            else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
                                 await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
                                     if (!taskData) {
                                         reject("Task not found");
@@ -154,7 +177,13 @@ function verifyProofFun(req, next) {
                                                 reject("User not found");
                                             } else {
 
-                                                proofData.verificationComments = formData.verificationComments || '';
+                                                if (formData.comment) {
+                                                    proofData.comments.push({
+                                                        comment: formData.comment,
+                                                        userId: req.decoded.updatedById,
+                                                        createdAt: new Date()
+                                                    })
+                                                }
                                                 proofData.submissionStatus = 4; //closed
                                                 proofData.hasVerified = true;
 
@@ -396,34 +425,55 @@ function updateProofFun(req, next) {
                             else if (res.hasVerified === true) {
                                 reject("Proof cannot be updated, it has already been verified.");
                             } else {
-
-                                if (!!formData.comments) res.comments = formData.comments;
-                                if (!!formData.feedback) res.feedback = formData.feedback;
-
-                                const index = parseInt(formData.index, 10);
-
-                                if (!isNaN(index)) {
-
-                                    if (formData.attachments && index >= 0 && index < res.attachments.length) {
-                                        res.attachments[index] = "attachments/" + formData.attachments; // 
-                                    } else if (formData.attachments) {
-                                        reject("Invalid attachment index provided.");
-                                    }
-
-
-                                    if (formData.trimAttachments && index >= 0 && index < res.trimAttachments.length) {
-                                        res.trimAttachments[index] = "attachments/" + formData.trimAttachments;
-                                    } else if (formData.trimAttachments) {
-                                        reject("Invalid trim attachment index provided.");
-                                    }
-                                } else {
-                                    reject("Invalid index provided.");
+                                
+                             
+                                if (formData.comment) {
+                                    res.comments.push({
+                                        comment: formData.comment,
+                                        userId: req.decoded.updatedById,
+                                        createdAt: new Date()
+                                    });
                                 }
 
+                              
+                                if (formData.attachments) {
+                                    const index = parseInt(formData.index, 10);
+                                    
+                                    if (!isNaN(index)) {
+                                        
+                                        if (index >= 0 && index < res.attachments.length) {
+                                            res.attachments[index] = "attachments/" + formData.attachments;
+                                        } else {
+                                            reject("Invalid attachment index provided.");
+                                        }
+                                    } else {
+                      
+                                        res.attachments.push("attachments/" + formData.attachments);
+                                    }
+                                }
 
+                      
+                                if (formData.trimAttachments) {
+                                    const index = parseInt(formData.index, 10);
+                                    
+                                    if (!isNaN(index)) {
+                                     
+                                        if (index >= 0 && index < res.trimAttachments.length) {
+                                            res.trimAttachments[index] = "attachments/" + formData.trimAttachments;
+                                        } else {
+                                            reject("Invalid trim attachment index provided.");
+                                        }
+                                    } else {
+                              
+                                        res.trimAttachments.push("attachments/" + formData.trimAttachments);
+                                    }
+                                }
+
+                     
                                 if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
                                 res.updatedAt = new Date();
 
+                        
                                 res.save()
                                     .then(updatedRes => {
                                         resolve({
@@ -446,6 +496,7 @@ function updateProofFun(req, next) {
         }
     });
 }
+
 
 
 
@@ -494,9 +545,9 @@ function addAttachmentInProofFun(req, next) {
                             message: "Proof not found"
                         });
                     } else {
-    
+
                         if ((proof.submissionStatus === 1 || proof.submissionStatus === 3) && proof.hasVerified === false) {
-                     
+
                             let newAttachments;
                             if (Array.isArray(formData.attachments)) {
                                 newAttachments = formData.attachments;
@@ -518,7 +569,7 @@ function addAttachmentInProofFun(req, next) {
                                 proof.trimAttachments = proof.trimAttachments.concat(newTrimAttachments.map(trimFile => "attachments/" + trimFile));
                             }
 
-                    
+
                             if (!!req.decoded.updatedById) proof.updatedById = req.decoded.updatedById;
                             proof.updatedAt = new Date();
 

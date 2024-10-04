@@ -7,9 +7,13 @@ var proofSchema = mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
     attachments: [{ type: String, required: false }],
     trimAttachments: [{ type: String, required: false }],
-    comments: { type: String, default: '' },
-    feedback: { type: String, default: '' },
-    verificationComments: { type: String, default: '' },
+    comments: [
+        {
+            comment: { type: String },
+            userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', },
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
     hasVerified: { type: Boolean, default: false },
     submissionStatus: { type: Number, default: 1 }, // 1 - submmitted , 2- VerificationInProgress,3-Resubmission,4-Closed
     isPaid: { type: Boolean, default: false },
