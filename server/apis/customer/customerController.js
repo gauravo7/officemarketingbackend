@@ -7,7 +7,11 @@ const bcrypt = require("bcrypt")
 
 
 module.exports = {
-    addCustomer
+    addCustomer,
+    index,
+    fetchCustomerById,
+    updateCustomer,
+    assignCategory
 }
 
 
@@ -86,4 +90,166 @@ function addCustomerFun(req, next) {
             })
         }
     })
+}
+
+
+
+
+async function index(req, res, next) {
+    await indexFun(req, next).then(next).catch(next);
+};
+function indexFun(req, next) {
+    return new Promise((resolve, reject) => {
+        let lim = 100000;
+        let skip1 = 0;
+        let formData = {}
+        if (!!req.body)
+            formData = req.body
+        else formData = req
+        formData.isDelete = false
+        if (formData.startpoint != undefined) {
+            skip1 = parseInt(formData.startpoint)
+            lim = 10;
+            delete formData.startpoint
+        }
+        let find = { $and: [formData] }
+        Customer.find(find).populate("userId").populate("categoryId")
+            .skip(skip1)
+            .limit(lim)
+            .exec()
+            .then(async alldocuments => {
+                let total = 0
+                total = await Customer.countDocuments(find)
+                resolve({
+                    status: 200,
+                    success: true,
+                    total: total,
+                    message: "All Customers Loaded",
+                    data: alldocuments
+                });
+            })
+            .catch(next)
+    });
+}
+
+
+
+async function fetchCustomerById(req, res, next) {
+    await fetchCustomerByIdFun(req, next).then(next).catch(next);
+};
+function fetchCustomerByIdFun(req, next) {
+    return new Promise(async (resolve, reject) => {
+        let formData = req.body
+        if (!formData._id) {
+            reject("_id is required")
+        }
+        else {
+            let finder = { $and: [formData] };
+            Customer.findOne(finder).populate("userId").populate("categoryId")
+                .exec()
+                .then(document => {
+                    if (!!document) {
+                        resolve({
+                            status: 200,
+                            success: true,
+                            message: "Single Customer Loaded",
+                            data: document
+                        });
+                    }
+                    else {
+                        reject("customer not found");
+                    }
+                })
+                .catch(next)
+        }
+    })
+}
+
+
+
+async function updateCustomer(req, res, next) {
+    await updateCustomerFun(req, next).then(next).catch(next);
+};
+function updateCustomerFun(req, next) {
+    let formData = req.body;
+    return new Promise((resolve, reject) => {
+
+        if (!formData._id) {
+            reject("_id is required");
+        } else {
+            Customer.findOne({ "_id": formData._id })
+                .then(async customerData => {
+                    if (!customerData) {
+                        reject("Customer not found");
+                    } else {
+                        if (!!formData.name) customerData.name = formData.name;
+                        if (!!formData.phone) customerData.phone = formData.phone;
+                        if (!!formData.address) customerData.address = formData.address;
+                        if (!!formData.profile) customerData.profile = "profile/" + formData.profile;
+                        if (!!formData.trimProfile) customerData.trimProfile = "profile/" + formData.trimProfile;
+                        if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById;
+                        customerData.updatedAt = new Date();
+                        customerData.save()
+                            .then(res => {
+                                User.findOne({ "_id": customerData.userId })
+                                    .then((userData) => {
+                                        if (!!formData.name) userData.name = formData.name;
+                                        if (!!formData.phone) userData.phone = formData.phone;
+                                        if (!!req.decoded.updatedById) userData.updatedById = req.decoded.updatedById;
+                                        userData.updatedAt = new Date();
+
+                                        userData.save().then(() => {
+                                            resolve({
+                                                status: 200,
+                                                success: true,
+                                                message: "Profile Updated Successfully",
+                                                data: res
+                                            });
+                                        }).catch(next);
+                                    }).catch(next);
+                            }).catch(next);
+                    }
+                }).catch(next);
+        }
+    });
+}
+
+
+
+
+async function assignCategory(req, res, next) {
+    await assignCategoryFun(req, next).then(next).catch(next);
+};
+function assignCategoryFun(req, next) {
+    let formData = req.body;
+    return new Promise((resolve, reject) => {
+        if (!formData._id) {
+            reject("_id is required");
+        } else if (!formData.categoryId) {
+            reject("categoryId is required");
+        } else {
+            Customer.findOne({ "_id": formData._id })
+                .then(async customerData => {
+                    if (!customerData) {
+                        reject("Customer not found");
+                    } else {
+                        customerData.categoryId = formData.categoryId;
+                        if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById;
+                        customerData.updatedAt = new Date();
+                        customerData.save()
+                            .then(res => {
+                                resolve({
+                                    status: 200,
+                                    success: true,
+                                    message: "Category successfully assigned.",
+                                    data: {
+                                        _id: res._id,
+                                        categoryId: res.categoryId
+                                    }
+                                });
+                            }).catch(next);
+                    }
+                }).catch(next);
+        }
+    });
 }

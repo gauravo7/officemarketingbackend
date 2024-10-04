@@ -16,7 +16,8 @@ module.exports = {
     index,
     fetchProofById,
     deleteProof,
-    updateProof
+    updateProof,
+    addAttachmentInProof
 }
 
 
@@ -27,6 +28,7 @@ module.exports = {
 async function addProof(req, res, next) {
     await addProofFun(req, next).then(next).catch(next);
 }
+
 
 
 
@@ -104,6 +106,8 @@ function addProofFun(req, next) {
         }
     });
 }
+
+
 
 
 
@@ -369,11 +373,6 @@ function deleteProofFun(req, next) {
 }
 
 
-
-
-
-
-
 async function updateProof(req, res, next) {
     await updateProofFun(req).then(next).catch(next);
 };
@@ -451,3 +450,110 @@ function updateProofFun(req, next) {
 
 
 
+
+
+
+
+async function addAttachmentInProof(req, res, next) {
+    await addAttachmentInProofFun(req, next).then(next).catch(next);
+}
+
+function addAttachmentInProofFun(req, next) {
+    return new Promise(async (resolve, reject) => {
+        const formData = req.body;
+        const createSchema = Joi.object().keys({
+            _id: Joi.string().required(),
+            attachments: Joi.alternatives().try(
+                Joi.array().items(Joi.string().required()).min(1),
+                Joi.string().required()
+            ).required(),
+            trimAttachments: Joi.alternatives().try(
+                Joi.array().items(Joi.string().required()).min(1),
+                Joi.string().optional()
+            ).optional()
+        });
+
+        const result = createSchema.validate(formData);
+        const { value, error } = result;
+        const valid = error == null;
+
+        if (!valid) {
+            const { details } = error;
+            reject({
+                status: 400,
+                success: false,
+                message: details.map(i => i.message).join(','),
+            });
+        } else {
+            Proof.findOne({ _id: formData._id })
+                .then(proof => {
+                    if (!proof) {
+                        reject({
+                            status: 404,
+                            success: false,
+                            message: "Proof not found"
+                        });
+                    } else {
+    
+                        if ((proof.submissionStatus === 1 || proof.submissionStatus === 3) && proof.hasVerified === false) {
+                     
+                            let newAttachments;
+                            if (Array.isArray(formData.attachments)) {
+                                newAttachments = formData.attachments;
+                            } else {
+                                newAttachments = [formData.attachments];
+                            }
+
+                            proof.attachments = proof.attachments.concat(newAttachments.map(file => "attachments/" + file));
+
+                            // Handle trimAttachments (optional)
+                            if (formData.trimAttachments) {
+                                let newTrimAttachments;
+                                if (Array.isArray(formData.trimAttachments)) {
+                                    newTrimAttachments = formData.trimAttachments;
+                                } else {
+                                    newTrimAttachments = [formData.trimAttachments];
+                                }
+
+                                proof.trimAttachments = proof.trimAttachments.concat(newTrimAttachments.map(trimFile => "attachments/" + trimFile));
+                            }
+
+                    
+                            if (!!req.decoded.updatedById) proof.updatedById = req.decoded.updatedById;
+                            proof.updatedAt = new Date();
+
+                            proof.save()
+                                .then(updatedProof => {
+                                    resolve({
+                                        status: 200,
+                                        success: true,
+                                        message: "Attachments added successfully",
+                                        data: updatedProof
+                                    });
+                                })
+                                .catch(err => {
+                                    reject({
+                                        status: 500,
+                                        success: false,
+                                        message: "Error while saving proof: " + err.message
+                                    });
+                                });
+                        } else {
+                            reject({
+                                status: 400,
+                                success: false,
+                                message: "Attachments can't be added as proof is either verified or in progress."
+                            });
+                        }
+                    }
+                })
+                .catch(err => {
+                    reject({
+                        status: 500,
+                        success: false,
+                        message: "Error while finding proof: " + err.message
+                    });
+                });
+        }
+    });
+}

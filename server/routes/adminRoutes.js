@@ -3,6 +3,7 @@ const sharp = require('sharp');
 const router = require('express').Router()
 
 const userController = require('../apis/user/userController')
+const customerController = require('../apis/customer/customerController')
 const roleAndPermissionController = require('../apis/roleAndPermission/roleAndPermissionController')
 const categoryController = require('../apis/category/categoryController')
 const taskController = require('../apis/task/taskController')
@@ -26,6 +27,24 @@ router.delete('/role/delete', roleAndPermissionController.deleteRole)
 
 
 
+/** User Routes */
+
+router.post('/user/all', userController.index)
+router.post('/user/single', userController.fetchUserById)
+router.delete('/user/delete', userController.deleteUser)
+
+/** User Routes Ends */
+
+
+
+/** customers Routes */
+
+router.post('/customer/all', customerController.index)
+router.post('/customer/single', customerController.fetchCustomerById)
+router.post('/customer/category/assign', customerController.assignCategory)
+
+
+/** customers Routes Ends*/
 
 
 router.post('/category/all', categoryController.index)
@@ -55,7 +74,8 @@ router.delete('/proof/delete', proofController.deleteProof)
 
 // Transactions
 
-router.post('/transaction/add', transactionController.addTransaction)
+router.post('/transaction/all', transactionController.index)
+router.post('/transaction/single', transactionController.fetchTransactionById)
 
 
 module.exports = router

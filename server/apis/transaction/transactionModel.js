@@ -12,9 +12,7 @@ const transactionSchema = new Schema({
     amount: {
         type: Number, required: true
     },
-    date: {
-        type: Date, default: Date.now
-    },
+ 
     taskId: {
         type: mongoose.Schema.Types.ObjectId, ref: 'Task'
     },
@@ -27,14 +25,14 @@ const transactionSchema = new Schema({
     remarks: {
         type: String,
     },
-    requestedAt: {
-        type: Date, default: Date.now
-    },
     addedById: {
         type: mongoose.Schema.Types.ObjectId, ref: 'User'
     },
     isDelete: {
         type: Boolean, default: false
+    },
+    createdAt: {
+        type: Date, default: Date.now
     },
     isBlocked: {
         type: Boolean, default: false

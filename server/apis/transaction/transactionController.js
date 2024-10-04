@@ -10,92 +10,87 @@ const db = require('../../config/db')
 
 module.exports = {
 
-    addTransaction,
+    index,
+    fetchTransactionById
 
 }
 
-async function addTransaction(req, res, next) {
-    await addTransactionFun(req, next).then(next).catch(next);
+async function index(req, res, next) {
+    await indexFun(req, next).then(next).catch(next);
+};
+
+function indexFun(req, next) {
+    return new Promise((resolve, reject) => {
+        var lim = 100000;
+        var skip1 = 0;
+        let formData = {}
+        if (req.body != undefined)
+            formData = req.body
+        else formData = req
+        formData.isDelete = false
+        if (formData.startpoint != undefined) {
+            skip1 = parseInt(formData.startpoint)
+            lim = 10;
+            delete formData.startpoint
+        }
+        var find = { $and: [formData] }
+
+        Transaction.find(find)
+            .skip(skip1)
+            .limit(lim)
+            .exec()
+            .then(async alldocuments => {
+                var total = 0
+                total = await Transaction.countDocuments(find)
+                resolve({
+                    status: 200,
+                    success: true,
+                    total: total,
+                    message: "All Transactions Loaded",
+                    data: alldocuments
+                });
+            })
+            .catch(next)
+    });
 }
 
-function addTransactionFun(req, next) {
+
+
+
+async function fetchTransactionById(req, res, next) {
+    await fetchTransactionByIdFun(req, next).then(next).catch(next);
+};
+
+
+function fetchTransactionByIdFun(req, next) {
+    let formData = req.body
     return new Promise(async (resolve, reject) => {
-        const formData = req.body;
-
-
-        const createSchema = Joi.object().keys({
-            userId: Joi.string().required(),
-            type: Joi.string().valid('credit', 'debit').required(),
-            amount: Joi.number().required(),
-            proofId: Joi.string().required(),
-
-
-        });
-
-        const result = createSchema.validate(formData);
-        const { value, error } = result;
-        const valid = error == null;
-
-        if (!valid) {
-            const { details } = error;
-            reject({
-                status: 400,
-                success: false,
-                message: details.map(i => i.message).join(',')
-            });
-        } else {
-
-            if (formData.type == 'credit') {
-                await Proof.findOne({ $and: [{ _id: formData.proofId }, { isDelete: false }] }).then(proofData => {
-                    if (proofData) {
-
-                        if (proofData.hasVerified == false) {
-                            reject({ success: false, status: 400, message: "Proof is not verified yet." });
-                            return;
-
+        if (formData != undefined && formData._id != undefined) {
+            if (db.isValid(formData._id)) {
+                var finder = { $and: [formData] };
+                Transaction.findOne(finder)
+                    .exec()
+                    .then(document => {
+                        if (document != null) {
+                            resolve({
+                                status: 200,
+                                success: true,
+                                message: "Single Transaction Loaded",
+                                data: document
+                            });
                         }
                         else {
-
-                            Transaction.countDocuments()
-                                .then(total => {
-                                    var category = new Transaction();
-                                    category.categoryAutoId = total + 1;
-                                    category.name = formData.name;
-                                    category.description = formData.description;
-
-                                    if (req.decoded.addedById) category.addedById = req.decoded.addedById;
-
-                                    category.save()
-                                        .then(saveRes => {
-                                            resolve({
-                                                status: 200, success: true, message: "Category added successfully.", data: saveRes
-                                            });
-                                        }).catch(err => {
-                                            reject({ success: false, status: 500, message: err.message });
-                                        });
-
-                                });
-
+                            reject("Transaction not found");
                         }
-
-
-                    } else {
-                        reject({ success: false, status: 404, message: "Proof not found" });
-                        return;
-                    }
-
-                }).catch(err => {
-                    reject({ success: false, status: 500, message: err.message });
-                });
-            }
-
-            else if (formData.type == 'debit') {
-
+                    })
+                    .catch(next)
             }
             else {
-
+                reject("Id Format is Wrong")
             }
-
         }
-    });
+        else {
+            resolve("Please enter _id to Proceed ");
+        }
+    })
 }

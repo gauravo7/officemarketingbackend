@@ -42,6 +42,17 @@ router.post('/register', helper.uploadImageFun.single('profile'), async (req, re
 
 router.use(require('../middleware/tokenChecker'))
 
+router.post('/update', helper.uploadImageFun.single('profile'), async (req, res, next) => {
+    await trim(req);
+    next();
+}, customerController.updateCustomer);
+
+
+
+router.post('/password/change', userController.changePassword);
+
+
+
 
 
 async function trimAttachments(req) {
@@ -104,6 +115,14 @@ router.post('/proof/add',
         await trimAttachments(req);
         next();
     }, proofController.addProof
+);
+
+
+router.post('/proof/attachments/add',
+    helper.uploadImageFun.array('attachments', 10), async (req, res, next) => {
+        await trimAttachments(req);
+        next();
+    }, proofController.addAttachmentInProof
 );
 
 
