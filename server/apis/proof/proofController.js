@@ -162,7 +162,7 @@ function verifyProofFun(req, next) {
                                         createdAt: new Date()
                                     })
                                 }
-                          
+
 
                                 proofData.submissionStatus = 3; //resubmission
                                 proofData.hasVerified = false;
@@ -303,7 +303,7 @@ function indexFun(req, next) {
         const find = { $and: [formData] };
         Proof.find(find)
             .skip(skip1)
-            .limit(lim).populate("taskId").populate("userId")
+            .limit(lim).populate("taskId").populate("userId").populate("comments.userId")
             .exec()
             .then(async alldocuments => {
                 var total = await Proof.countDocuments(find);
@@ -334,7 +334,7 @@ function fetchProofByIdFun(req, next) {
         if (formData != undefined && formData._id != undefined) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
-                Proof.findOne(finder).populate("taskId").populate("userId")
+                Proof.findOne(finder).populate("taskId").populate("userId").populate("comments.userId")
                     .exec()
                     .then(document => {
                         if (document != null) {
@@ -425,8 +425,8 @@ function updateProofFun(req, next) {
                             else if (res.hasVerified === true) {
                                 reject("Proof cannot be updated, it has already been verified.");
                             } else {
-                                
-                             
+
+
                                 if (formData.comment) {
                                     res.comments.push({
                                         comment: formData.comment,
@@ -435,45 +435,45 @@ function updateProofFun(req, next) {
                                     });
                                 }
 
-                              
+
                                 if (formData.attachments) {
                                     const index = parseInt(formData.index, 10);
-                                    
+
                                     if (!isNaN(index)) {
-                                        
+
                                         if (index >= 0 && index < res.attachments.length) {
                                             res.attachments[index] = "attachments/" + formData.attachments;
                                         } else {
                                             reject("Invalid attachment index provided.");
                                         }
                                     } else {
-                      
+
                                         res.attachments.push("attachments/" + formData.attachments);
                                     }
                                 }
 
-                      
+
                                 if (formData.trimAttachments) {
                                     const index = parseInt(formData.index, 10);
-                                    
+
                                     if (!isNaN(index)) {
-                                     
+
                                         if (index >= 0 && index < res.trimAttachments.length) {
                                             res.trimAttachments[index] = "attachments/" + formData.trimAttachments;
                                         } else {
                                             reject("Invalid trim attachment index provided.");
                                         }
                                     } else {
-                              
+
                                         res.trimAttachments.push("attachments/" + formData.trimAttachments);
                                     }
                                 }
 
-                     
+
                                 if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
                                 res.updatedAt = new Date();
 
-                        
+
                                 res.save()
                                     .then(updatedRes => {
                                         resolve({
