@@ -11,7 +11,8 @@ module.exports = {
     index,
     fetchUserById,
     deleteUser,
-    changePassword
+    changePassword,
+    updateUser
 
 }
 
@@ -265,4 +266,78 @@ function changePasswordFun(req, next) {
             })
             .catch(next);
     });
+}
+
+
+async function updateUser(req, res, next) {
+    await updateUserFun(req, next).then(next).catch(next);
+};
+
+
+function updateUserFun(req, next) {
+    let formData = req.body
+    console.log(formData);
+    
+    let isValidated = true
+    return new Promise((resolve, reject) => {
+        if (!formData._id) {  
+            reject("_id is required");
+        }
+        else {
+            User.findOne({ "_id": formData._id })
+                .then(async res => {
+                    if (!res) {
+                        reject("User not found");
+                    }
+                    else {
+                        if (!!formData.name) res.name = formData.name
+                        if (!!formData.email) res.email = formData.email.toLowerCase()
+                        if (!!formData.phone) res.phone = formData.phone
+                        if (!!formData.role) res.role = formData.role;
+                        if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById
+                        let id = res._id
+                        if (!!formData.email) {
+                            await User.findOne({ $and: [{ email: formData.email }, { isDelete: false }, { _id: { $ne: id } }] }).then(existingUser => {
+                                if (existingUser != null)
+                                    isValidated = false
+                            })
+                        }
+                        res.updatedAt = new Date();
+                        if (isValidated) {
+                            res.save()
+                                .then(res => {
+                                    Customer.findOne({ "userId": formData._id }).then((customerData) => {
+                                        if (!customerData) {
+                                            reject("customer not found");
+                                        }
+                                        else {
+                                            if (!!formData.name) customerData.name = formData.name
+                                            if (!!formData.email) customerData.email = formData.email.toLowerCase()
+                                            if (!!formData.phone) customerData.phone = formData.phone
+                                            if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById
+                                            customerData.updatedAt = new Date();
+                                            customerData.save().then(() => {
+                                                {
+                                                    resolve({
+                                                        status: 200,
+                                                        success: true,
+                                                        message: "User Updated Successfully",
+                                                        data: res
+                                                    })
+                                                }
+
+                                            }).catch(next)
+                                        }
+                                    })
+                                })
+                                .catch(next)
+                        } else {
+                            reject("User exists with same email")
+                        }
+                    }
+                })
+                .catch(next)
+        }
+    });
+
 }

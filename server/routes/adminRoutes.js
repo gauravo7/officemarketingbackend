@@ -32,6 +32,7 @@ router.delete('/role/delete', roleAndPermissionController.deleteRole)
 router.post('/user/all', userController.index)
 router.post('/user/single', userController.fetchUserById)
 router.delete('/user/delete', userController.deleteUser)
+router.post('/user/update', userController.updateUser)
 
 /** User Routes Ends */
 
@@ -76,6 +77,17 @@ router.delete('/proof/delete', proofController.deleteProof)
 
 router.post('/transaction/all', transactionController.index)
 router.post('/transaction/single', transactionController.fetchTransactionById)
+
+
+router.all("*", (req, res) => {
+    res.send({
+        success: false,
+        status: 404,
+        message: "Route Not Found"
+
+    })
+
+})
 
 
 module.exports = router
