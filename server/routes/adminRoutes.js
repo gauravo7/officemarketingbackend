@@ -77,6 +77,7 @@ router.delete('/proof/delete', proofController.deleteProof)
 
 router.post('/transaction/all', transactionController.index)
 router.post('/transaction/single', transactionController.fetchTransactionById)
+router.post('/transaction/create', transactionController.createTransaction)
 
 
 router.all("*", (req, res) => {

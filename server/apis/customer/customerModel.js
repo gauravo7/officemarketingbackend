@@ -12,7 +12,7 @@ var customerSchema = mongoose.Schema({
     balance: { type: Number, default: 0 },
     totalEarned: { type: Number, default: 0 },
     totalWithdrawn: { type: Number, default: 0 },
-    pendingEarnings: { type: Number, default: 0 },
+    pendingRequests: { type: Number, default: 0 },
     categoryId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'category' },
     addedById: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },
     userId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },

@@ -6,6 +6,7 @@ const path = require("path")
 const userController = require('../apis/user/userController')
 const customerController = require('../apis/customer/customerController')
 const proofController = require('../apis/proof/proofController')
+const transactionController = require('../apis/transaction/transactionController')
 var helper = require('../utilities/helper')
 
 /** AUTHENTICATION */
@@ -124,6 +125,11 @@ router.post('/proof/attachments/add',
         next();
     }, proofController.addAttachmentInProof
 );
+
+// Transaction 
+
+router.post('/redeem/request/add', transactionController.redeemRequest);
+
 
 
 
