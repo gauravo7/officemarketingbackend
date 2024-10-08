@@ -18,7 +18,7 @@ async function index(req, res, next) {
 
 function indexFun(req, next) {
     return new Promise((resolve, reject) => {
-        var lim = 100000;
+        var lim = 10;
         var skip1 = 0;
         let formData = {}
         if (req.body != undefined)
@@ -60,13 +60,13 @@ async function addCategory(req, res, next) {
 function addCategoryFun(req, next) {
     return new Promise(async (resolve, reject) => {
         const formData = req.body;
-        
+
 
         const createSchema = Joi.object().keys({
             name: Joi.string().required(),
             description: Joi.string().optional()
         });
-        
+
         const result = createSchema.validate(formData);
         const { value, error } = result;
         const valid = error == null;
@@ -105,7 +105,7 @@ function addCategoryFun(req, next) {
                 }
 
             }).catch(err => {
-                reject({ success: false, status: 500, message:  err.message });
+                reject({ success: false, status: 500, message: err.message });
             });
         }
     });
@@ -171,16 +171,16 @@ function updateCategoryFun(req, next) {
                         if (!res) {
                             reject("Category not found");
                         } else {
-                      
+
                             if (!!formData.name) res.name = formData.name;
-                            if (!!formData.description) res.description = formData.description; 
+                            if (!!formData.description) res.description = formData.description;
                             if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
 
                             let id = res._id;
 
-                            
+
                             if (!!formData.name) {
-                               
+
                                 await Category.findOne({
                                     $and: [{ name: formData.name }, { isDelete: false }, { _id: { $ne: id } }]
                                 }).then(existingCategory => {
@@ -233,16 +233,16 @@ function deleteCategoryFun(req, next) {
         if (formData != undefined && formData._id != undefined) {
             Category.findOne({ "_id": formData._id })
                 .then(async res => {
-                
+
                     if (!res) {
                         reject("Category not found");
                     } else {
-          
+
                         res.isDelete = true;
                         res.updatedAt = new Date();
                         if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
 
-                       
+
                         res.save()
                             .then(() => {
                                 resolve({

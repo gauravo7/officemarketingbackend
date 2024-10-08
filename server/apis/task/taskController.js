@@ -19,7 +19,7 @@ async function index(req, res, next) {
 function indexFun(req, next) {
     return new Promise((resolve, reject) => {
         var lim = 10;
-        var skip1 = 0; 
+        var skip1 = 0;
         let formData = {};
 
         if (req.body != undefined) {
@@ -28,13 +28,13 @@ function indexFun(req, next) {
             formData = req;
         }
 
-     
+
         formData.isDelete = false;
 
-       
+
         if (formData.startpoint != undefined) {
             skip1 = parseInt(formData.startpoint);
-            delete formData.startpoint; 
+            delete formData.startpoint;
         }
 
 
@@ -45,12 +45,12 @@ function indexFun(req, next) {
             .limit(lim).populate("categoryId")
             .exec()
             .then(async alldocuments => {
-                var total = await Task.countDocuments(find); 
+                var total = await Task.countDocuments(find);
                 resolve({
                     status: 200,
                     success: true,
                     total: total,
-                    message: "All Tasks Loaded", 
+                    message: "All Tasks Loaded",
                     data: alldocuments
                 });
             })
@@ -73,11 +73,11 @@ function addTaskFun(req, next) {
         const formData = req.body;
 
         const createSchema = Joi.object().keys({
-            title: Joi.string().required(), 
-            description: Joi.string().optional().default('No description'), 
+            title: Joi.string().required(),
+            description: Joi.string().optional().default('No description'),
             categoryId: Joi.string().required().optional(),
-            price: Joi.number().required(), 
-            dueDate: Joi.date().required() 
+            price: Joi.number().required(),
+            dueDate: Joi.date().required()
         });
 
         const result = createSchema.validate(formData);
@@ -92,16 +92,16 @@ function addTaskFun(req, next) {
                 message: details.map(i => i.message).join(', ')
             });
         } else {
-      
+
             Task.countDocuments()
                 .then(total => {
                     var task = new Task();
                     task.taskAutoId = total + 1;
-                    task.title = formData.title; 
-                    task.description = formData.description || 'No description'; 
-                    task.categoryId = formData.categoryId; 
+                    task.title = formData.title;
+                    task.description = formData.description || 'No description';
+                    task.categoryId = formData.categoryId;
                     task.price = formData.price;
-                    task.dueDate = formData.dueDate; 
+                    task.dueDate = formData.dueDate;
 
                     if (req.decoded.addedById) task.addedById = req.decoded.addedById;
 
@@ -141,7 +141,7 @@ function fetchTaskByIdFun(req, next) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
                 Task.findOne(finder)
-                .populate("categoryId")
+                    .populate("categoryId")
                     .exec()
                     .then(document => {
                         if (document != null) {
@@ -187,29 +187,29 @@ function updateTaskFun(req, next) {
                         if (!res) {
                             reject("Task not found");
                         } else {
-                  
+
                             if (formData.title) res.title = formData.title;
                             if (formData.description) res.description = formData.description;
                             if (formData.categoryId) res.categoryId = formData.categoryId;
                             if (formData.price) res.price = formData.price;
                             if (formData.dueDate) res.dueDate = formData.dueDate;
-                         
+
                             if (req.decoded.updatedById) res.updatedById = req.decoded.updatedById;
-                                                        
-                            res.updatedAt = new Date();                     
-                                res.save()
-                                    .then(updatedTask => {
-                                        resolve({
-                                            status: 200,
-                                            success: true,
-                                            message: "Task updated successfully",
-                                            data: updatedTask
-                                        });
-                                    })
-                                    .catch(err => {
-                                        reject({ success: false, status: 500, message: err.message });
+
+                            res.updatedAt = new Date();
+                            res.save()
+                                .then(updatedTask => {
+                                    resolve({
+                                        status: 200,
+                                        success: true,
+                                        message: "Task updated successfully",
+                                        data: updatedTask
                                     });
-                        
+                                })
+                                .catch(err => {
+                                    reject({ success: false, status: 500, message: err.message });
+                                });
+
                         }
                     })
                     .catch(err => {
@@ -237,7 +237,7 @@ function deleteTaskFun(req, next) {
         if (formData != undefined && formData._id != undefined) {
             Task.findOne({ "_id": formData._id })
                 .then(async res => {
-                
+
                     if (!res) {
                         reject("Task not found");
                     } else {
