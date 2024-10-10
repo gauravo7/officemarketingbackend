@@ -37,7 +37,7 @@ function indexFun(req, next) {
         }
         var find = { $and: [formData] }
 
-        Transaction.find(find)
+        Transaction.find(find).populate("customerId").populate("userId")
             .skip(skip1)
             .limit(lim)
             .exec()
@@ -69,7 +69,7 @@ function fetchTransactionByIdFun(req, next) {
         if (formData != undefined && formData._id != undefined) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
-                Transaction.findOne(finder)
+                Transaction.findOne(finder).populate("customerId").populate("userId")
                     .exec()
                     .then(document => {
                         if (document != null) {
@@ -158,8 +158,6 @@ function redeemRequestFun(req, next) {
                             if (req.decoded.addedById) transaction.addedById = req.decoded.addedById;
                             transaction.save()
                                 .then(saveRes => {
-
-
                                     customerData.pendingRequests += 1
                                     customerData.balance -= formData.amount; // Deduct amount from balance
                                     customerData.save()
