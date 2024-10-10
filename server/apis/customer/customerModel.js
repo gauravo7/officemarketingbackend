@@ -13,7 +13,7 @@ var customerSchema = mongoose.Schema({
     totalEarned: { type: Number, default: 0 },
     totalWithdrawn: { type: Number, default: 0 },
     pendingRequests: { type: Number, default: 0 },
-    level: { type: String, default: 1, },
+    level: { type: Number, default: 1, },
     addedById: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },
     userId: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },
     updatedById: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },

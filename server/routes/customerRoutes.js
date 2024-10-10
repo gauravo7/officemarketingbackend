@@ -5,6 +5,7 @@ const userController = require('../apis/user/userController')
 const customerController = require('../apis/customer/customerController')
 const proofController = require('../apis/proof/proofController')
 const transactionController = require('../apis/transaction/transactionController')
+const myTaskController = require('../apis/myTask/myTaskController')
 var helper = require('../utilities/helper')
 
 /** AUTHENTICATION */
@@ -22,13 +23,19 @@ async function trim(req) {
         }
     }
 }
-router.post('/register', helper.uploadImageFun.single('profile'), async (req, res, next) => { await trim(req); next(); }, customerController.addCustomer);
+router.post('/register', helper.uploadImageFun.single('profile'), async(req, res, next) => {
+    await trim(req);
+    next();
+}, customerController.addCustomer);
 
 // Middleware..............................
 router.use(require('../middleware/tokenChecker'))
-// Middleware..............................
+    // Middleware..............................
 
-router.post('/update', helper.uploadImageFun.single('profile'), async (req, res, next) => { await trim(req); next(); }, customerController.updateCustomer);
+router.post('/update', helper.uploadImageFun.single('profile'), async(req, res, next) => {
+    await trim(req);
+    next();
+}, customerController.updateCustomer);
 router.post('/password/change', userController.changePassword);
 
 // Proof .................................................
@@ -58,9 +65,18 @@ async function trimAttachments(req) {
         }
     }
 }
-router.post('/proof/update', helper.uploadImageFun.single('attachments'), async (req, res, next) => { await trimAttachments(req); next(); }, proofController.updateProof);
-router.post('/proof/add', helper.uploadImageFun.array('attachments', 10), async (req, res, next) => { await trimAttachments(req); next(); }, proofController.addProof);
-router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments', 10), async (req, res, next) => { await trimAttachments(req); next(); }, proofController.addAttachmentInProof);
+router.post('/proof/update', helper.uploadImageFun.single('attachments'), async(req, res, next) => {
+    await trimAttachments(req);
+    next();
+}, proofController.updateProof);
+router.post('/proof/add', helper.uploadImageFun.array('attachments', 10), async(req, res, next) => {
+    await trimAttachments(req);
+    next();
+}, proofController.addProof);
+router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments', 10), async(req, res, next) => {
+    await trimAttachments(req);
+    next();
+}, proofController.addAttachmentInProof);
 // Proof Ends.............................................
 
 
@@ -69,6 +85,18 @@ router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments',
 router.post('/redeem/request/add', transactionController.redeemRequest);
 // Transactions End..........................................
 
+
+
+
+
+
+
+// My task
+router.post('/task/add', myTaskController.addMyTask);
+router.post('/task/single', myTaskController.fetchMyTaskById);
+router.post('/task/all', myTaskController.index);
+
+// My Task end ................................
 
 
 

@@ -60,6 +60,7 @@ function addProofFun(req, next) {
                 message: details.map(i => i.message).join(','),
             });
         } else {
+
             Task.findOne({ _id: formData.taskId })
                 .then((task) => {
                     if (!task) {
