@@ -31,7 +31,7 @@ function loginFun(req, next) {
     const result = loginSchema.validate(body)
     const { value, error } = result;
     const valid = error == null
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         if (!valid) {
             const { details } = error;
             reject({
@@ -47,11 +47,14 @@ function loginFun(req, next) {
                 if (!!res) {
                     if (!bcrypt.compareSync(body.password, res.password)) {
                         reject("Invalid Username Password")
-                    }
-                    else {
+                    } else {
                         if (res.status == true) {
                             let user = {
-                                name: res.name, email: res.email, userType: res.userType, isAdmin: res.isAdmin, _id: res._id
+                                name: res.name,
+                                email: res.email,
+                                userType: res.userType,
+                                isAdmin: res.isAdmin,
+                                _id: res._id
                             }
                             const token = jwt.sign(user, process.env.SECRET)
                             resolve({
@@ -85,6 +88,7 @@ function loginFun(req, next) {
 async function index(req, res, next) {
     await indexFun(req, next).then(next).catch(next);
 };
+
 function indexFun(req, next) {
     return new Promise((resolve, reject) => {
         let lim = 100000;
@@ -124,13 +128,13 @@ function indexFun(req, next) {
 async function fetchUserById(req, res, next) {
     await fetchUserByIdFun(req, next).then(next).catch(next);
 };
+
 function fetchUserByIdFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         let formData = req.body
         if (!formData._id) {
             reject("_id is required")
-        }
-        else {
+        } else {
             let finder = { $and: [formData] };
             User.findOne(finder).populate("role")
                 .exec()
@@ -142,8 +146,7 @@ function fetchUserByIdFun(req, next) {
                             message: "Single User Loaded",
                             data: document
                         });
-                    }
-                    else {
+                    } else {
                         reject("User not found");
                     }
                 })
@@ -158,6 +161,7 @@ function fetchUserByIdFun(req, next) {
 async function deleteUser(req, res, next) {
     await deleteUserFun(req, next).then(next).catch(next);
 };
+
 function deleteUserFun(req, next) {
     let formData = req.body
     return new Promise((resolve, reject) => {
@@ -176,8 +180,7 @@ function deleteUserFun(req, next) {
                                     .then((customerData) => {
                                         if (!customerData) {
                                             reject("customer not found");
-                                        }
-                                        else {
+                                        } else {
                                             customerData.isDelete = true
                                             customerData.updatedAt = new Date();
                                             if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById
@@ -201,8 +204,7 @@ function deleteUserFun(req, next) {
                     }
                 })
                 .catch(next)
-        }
-        else {
+        } else {
             reject("Please enter an _id to Proceed");
         }
     });
@@ -284,17 +286,16 @@ function updateUserFun(req, next) {
     return new Promise((resolve, reject) => {
         if (!formData._id) {
             reject("_id is required");
-        }
-        else {
+        } else {
             User.findOne({ "_id": formData._id })
                 .then(async res => {
                     if (!res) {
                         reject("User not found");
-                    }
-                    else {
+                    } else {
                         if (!!formData.name) res.name = formData.name
                         if (!!formData.email) res.email = formData.email.toLowerCase()
                         if (!!formData.phone) res.phone = formData.phone
+                        if (!!formData.password) res.password = bcrypt.hashSync(formData.password, 10);
                         if (!!formData.role) res.role = formData.role;
                         if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById
                         let id = res._id
@@ -311,8 +312,7 @@ function updateUserFun(req, next) {
                                     Customer.findOne({ "userId": formData._id }).then((customerData) => {
                                         if (!customerData) {
                                             reject("customer not found");
-                                        }
-                                        else {
+                                        } else {
                                             if (!!formData.name) customerData.name = formData.name
                                             if (!!formData.email) customerData.email = formData.email.toLowerCase()
                                             if (!!formData.phone) customerData.phone = formData.phone
@@ -351,7 +351,7 @@ async function addUser(req, res, next) {
 }
 
 function addUserFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body
         const createSchema = Joi.object().keys({
             name: Joi.string().required(),
@@ -386,7 +386,10 @@ function addUserFun(req, next) {
                         if (req.decoded.addedById) user.addedById = req.decoded.addedById;
                         user.save().then((saveUser) => {
                             resolve({
-                                status: 200, success: true, message: "User Added Successfully.", data: saveUser
+                                status: 200,
+                                success: true,
+                                message: "User Added Successfully.",
+                                data: saveUser
                             })
 
                         }).catch(err => {
