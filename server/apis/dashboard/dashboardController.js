@@ -9,11 +9,14 @@ const User = require("../user/userModel")
 
 
 
-const dashboard = async(req, res) => {
+const adminDashboard = async(req, res) => {
     let totalCategories = await Category.countDocuments({ isDelete: false })
     let totalCustomers = await Customer.countDocuments({ isDelete: false })
     let pendingProofs = await Proof.countDocuments({ hasVerified: false })
-    let totalTasks = await Task.countDocuments()
+    let totalTasks = await Task.countDocuments({ isDelete: false })
+    let newRedeemRequest = await Transaction.countDocuments({ isDelete: false, type: "debit", transactionStatus: 1 })
+    let completeTransactions = await Transaction.countDocuments({ isDelete: false, type: "debit", transactionStatus: 3 })
+
 
 
     res.send({
@@ -24,9 +27,10 @@ const dashboard = async(req, res) => {
         totalCustomers: totalCustomers,
         pendingProofs: pendingProofs,
         totalTasks: totalTasks,
-
+        newRedeemRequest: newRedeemRequest,
+        completeTransactions: completeTransactions,
     })
 
 }
 
-module.exports = { dashboard }
+module.exports = { adminDashboard }

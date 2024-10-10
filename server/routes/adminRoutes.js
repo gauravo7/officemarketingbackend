@@ -9,6 +9,7 @@ const categoryController = require('../apis/category/categoryController')
 const taskController = require('../apis/task/taskController')
 const proofController = require('../apis/proof/proofController')
 const transactionController = require('../apis/transaction/transactionController')
+const dashboardController = require('../apis/dashboard/dashboardController')
 
 /** AUTHENTICATION */
 router.post('/login', userController.login)
@@ -16,6 +17,11 @@ router.post('/login', userController.login)
 
 router.use(require('../middleware/tokenChecker'))
 
+
+
+
+// Dashboard
+router.get('/dashboard', dashboardController.adminDashboard)
 
 
 
