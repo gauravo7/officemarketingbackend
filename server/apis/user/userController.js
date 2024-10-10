@@ -103,7 +103,8 @@ function indexFun(req, next) {
         User.find(find)
             .skip(skip1)
             .limit(lim)
-            .exec().populate("role")
+            .populate("role")
+            .exec()
             .then(async alldocuments => {
                 let total = 0
                 total = await User.countDocuments(find)
@@ -356,7 +357,8 @@ function addUserFun(req, next) {
             name: Joi.string().required(),
             email: Joi.string().required(),
             password: Joi.string().required(),
-            phone: Joi.string().required(),
+            roleId: Joi.string().required(),
+            phone: Joi.string().optional(),
         });
         const result = createSchema.validate(formData)
         const { value, error } = result
@@ -377,6 +379,7 @@ function addUserFun(req, next) {
                         user.userAutoId = total + 1
                         user.name = formData.name
                         user.email = formData.email
+                        user.role = formData.roleId
                         user.phone = formData.phone
                         user.password = bcrypt.hashSync(formData.password, 10);
                         user.userType = 3
