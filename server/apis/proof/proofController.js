@@ -132,6 +132,7 @@ function verifyProofFun(req, next) {
     return new Promise((resolve, reject) => {
         if (formData && formData._id) {
             if (db.isValid(formData._id)) {
+                console.log(formData.hasVerified);
                 if (formData.hasVerified === undefined || (formData.hasVerified !== 'true' && formData.hasVerified !== 'false')) {
                     reject("Please provide a valid value for hasVerified (true or false).");
                     return;
@@ -151,10 +152,10 @@ function verifyProofFun(req, next) {
                                 proofData.hasVerified = false;
                             } else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
 
-
+                                console.log(formData);
                                 if (formData.comment) {
                                     proofData.comments.push({
-                                        comment: formData.comment,
+                                        comment: formData.comment.toString(),
                                         userId: req.decoded.updatedById,
                                         createdAt: new Date()
                                     })
@@ -163,8 +164,9 @@ function verifyProofFun(req, next) {
 
                                 proofData.submissionStatus = 3; //resubmission
                                 proofData.hasVerified = false;
-                            } else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
-                                await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async(taskData) => {
+                            }
+                            else if (formData.hasVerified === 'true' && formData.submissionStatus === "4" || formData.submissionStatus === 4) {
+                                await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
                                     if (!taskData) {
                                         reject("Task not found");
                                     } else {

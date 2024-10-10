@@ -116,7 +116,7 @@ function indexFun(req, next) {
             delete formData.startpoint
         }
         let find = { $and: [formData] }
-        Customer.find(find).populate("userId").populate("categoryId")
+        Customer.find(find).populate("userId")
             .skip(skip1)
             .limit(lim)
             .exec()
