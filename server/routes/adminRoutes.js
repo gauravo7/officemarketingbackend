@@ -49,7 +49,7 @@ router.post('/user/add', userController.addUser)
 
 router.post('/customer/all', customerController.index)
 router.post('/customer/single', customerController.fetchCustomerById)
-router.post('/customer/category/assign', customerController.assignCategory)
+
 
 
 /** customers Routes Ends*/

@@ -10,8 +10,7 @@ module.exports = {
     addCustomer,
     index,
     fetchCustomerById,
-    updateCustomer,
-    assignCategory
+    updateCustomer
 }
 
 
@@ -20,7 +19,7 @@ async function addCustomer(req, res, next) {
 }
 
 function addCustomerFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body
         console.log(formData)
         const createSchema = Joi.object().keys({
@@ -70,7 +69,10 @@ function addCustomerFun(req, next) {
                                     customer.save()
                                         .then(saveRes => {
                                             resolve({
-                                                status: 200, success: true, message: "User registered successfully.", data: saveRes
+                                                status: 200,
+                                                success: true,
+                                                message: "User registered successfully.",
+                                                data: saveRes
                                             })
                                         }).catch(err => {
                                             helper.unlinkImage(req.file)
@@ -98,6 +100,7 @@ function addCustomerFun(req, next) {
 async function index(req, res, next) {
     await indexFun(req, next).then(next).catch(next);
 };
+
 function indexFun(req, next) {
     return new Promise((resolve, reject) => {
         let lim = 100000;
@@ -137,13 +140,13 @@ function indexFun(req, next) {
 async function fetchCustomerById(req, res, next) {
     await fetchCustomerByIdFun(req, next).then(next).catch(next);
 };
+
 function fetchCustomerByIdFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         let formData = req.body
         if (!formData._id) {
             reject("_id is required")
-        }
-        else {
+        } else {
             let finder = { $and: [formData] };
             Customer.findOne(finder).populate("userId").populate("categoryId")
                 .exec()
@@ -155,8 +158,7 @@ function fetchCustomerByIdFun(req, next) {
                             message: "Single Customer Loaded",
                             data: document
                         });
-                    }
-                    else {
+                    } else {
                         reject("customer not found");
                     }
                 })
@@ -170,6 +172,7 @@ function fetchCustomerByIdFun(req, next) {
 async function updateCustomer(req, res, next) {
     await updateCustomerFun(req, next).then(next).catch(next);
 };
+
 function updateCustomerFun(req, next) {
     let formData = req.body;
     return new Promise((resolve, reject) => {
@@ -207,46 +210,6 @@ function updateCustomerFun(req, next) {
                                             });
                                         }).catch(next);
                                     }).catch(next);
-                            }).catch(next);
-                    }
-                }).catch(next);
-        }
-    });
-}
-
-
-
-
-async function assignCategory(req, res, next) {
-    await assignCategoryFun(req, next).then(next).catch(next);
-};
-function assignCategoryFun(req, next) {
-    let formData = req.body;
-    return new Promise((resolve, reject) => {
-        if (!formData._id) {
-            reject("_id is required");
-        } else if (!formData.categoryId) {
-            reject("categoryId is required");
-        } else {
-            Customer.findOne({ "_id": formData._id })
-                .then(async customerData => {
-                    if (!customerData) {
-                        reject("Customer not found");
-                    } else {
-                        customerData.categoryId = formData.categoryId;
-                        if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById;
-                        customerData.updatedAt = new Date();
-                        customerData.save()
-                            .then(res => {
-                                resolve({
-                                    status: 200,
-                                    success: true,
-                                    message: "Category successfully assigned.",
-                                    data: {
-                                        _id: res._id,
-                                        categoryId: res.categoryId
-                                    }
-                                });
                             }).catch(next);
                     }
                 }).catch(next);

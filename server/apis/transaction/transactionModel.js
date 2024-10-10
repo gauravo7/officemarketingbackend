@@ -6,11 +6,12 @@ const transactionSchema = new Schema({
     transactionId: { type: String },
 
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'customer', },
 
     type: { type: String, required: true },
 
     accountDetails: { type: String },
-    
+
     amount: { type: Number, required: true },
 
     taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'task' },

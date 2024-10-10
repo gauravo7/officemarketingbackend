@@ -65,7 +65,7 @@ async function fetchTransactionById(req, res, next) {
 
 function fetchTransactionByIdFun(req, next) {
     let formData = req.body
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         if (formData != undefined && formData._id != undefined) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
@@ -79,18 +79,15 @@ function fetchTransactionByIdFun(req, next) {
                                 message: "Single Transaction Loaded",
                                 data: document
                             });
-                        }
-                        else {
+                        } else {
                             reject("Transaction not found");
                         }
                     })
                     .catch(next)
-            }
-            else {
+            } else {
                 reject("Id Format is Wrong")
             }
-        }
-        else {
+        } else {
             resolve("Please enter _id to Proceed ");
         }
     })
@@ -105,7 +102,7 @@ async function redeemRequest(req, res, next) {
 
 
 function redeemRequestFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body;
 
         const createSchema = Joi.object().keys({
@@ -146,12 +143,12 @@ function redeemRequestFun(req, next) {
                             message: "Insufficient balance to process this request."
                         });
                         return;
-                    }
-                    else {
+                    } else {
                         Transaction.countDocuments().then(total => {
                             var transaction = new Transaction();
                             transaction.transactionAutoId = total + 1;
                             transaction.userId = formData.userId;
+                            transaction.customerId = customerData._id;
                             transaction.amount = formData.amount;
                             transaction.accountDetails = formData.accountDetails;
                             transaction.type = "debit";
@@ -161,6 +158,8 @@ function redeemRequestFun(req, next) {
                             if (req.decoded.addedById) transaction.addedById = req.decoded.addedById;
                             transaction.save()
                                 .then(saveRes => {
+
+
                                     customerData.pendingRequests += 1
                                     customerData.balance -= formData.amount; // Deduct amount from balance
                                     customerData.save()
@@ -194,7 +193,7 @@ async function createTransaction(req, res, next) {
 
 
 function createTransactionFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body;
 
         const createSchema = Joi.object().keys({
@@ -249,7 +248,7 @@ function createTransactionFun(req, next) {
 
 
 
-                        transactionData.transactionStatus = 2;  // Set status to rejected
+                        transactionData.transactionStatus = 2; // Set status to rejected
                         transactionData.remarks = formData.remarks;
                         if (!!req.decoded.updatedById) transactionData.updatedById = req.decoded.updatedById;
                         transactionData.updatedAt = new Date();
@@ -296,7 +295,7 @@ function createTransactionFun(req, next) {
                             return;
                         }
 
-                        transactionData.transactionStatus = 3;  // Set status to completed
+                        transactionData.transactionStatus = 3; // Set status to completed
                         transactionData.remarks = formData.remarks;
                         transactionData.paymentMethod = formData.paymentMethod;
                         transactionData.transactionId = formData.transactionId;
@@ -333,6 +332,3 @@ function createTransactionFun(req, next) {
         }
     });
 }
-
-
-
