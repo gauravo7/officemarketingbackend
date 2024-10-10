@@ -33,7 +33,7 @@ async function addProof(req, res, next) {
 
 
 function addProofFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body;
 
         const createSchema = Joi.object().keys({
@@ -77,15 +77,12 @@ function addProofFun(req, next) {
                                 proof.userId = formData.userId;
 
                                 if (formData.comment) {
-                                    comment = [
-                                        {
-                                            comment: formData.comment,
-                                            userId: formData.userId,
-                                            createdAt: new Date()
-                                        }
-                                    ]
-                                }
-                                else {
+                                    comment = [{
+                                        comment: formData.comment,
+                                        userId: formData.userId,
+                                        createdAt: new Date()
+                                    }]
+                                } else {
                                     comment = []
                                 }
                                 proof.comments = comment;
@@ -151,8 +148,7 @@ function verifyProofFun(req, next) {
                             if (formData.hasVerified === 'false' && formData.submissionStatus === 2 || formData.submissionStatus === "2") {
                                 proofData.submissionStatus = 2; //inProgress
                                 proofData.hasVerified = false;
-                            }
-                            else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
+                            } else if (formData.hasVerified === 'false' && formData.submissionStatus === 3 || formData.submissionStatus === "3") {
 
 
                                 if (formData.comment) {
@@ -166,13 +162,12 @@ function verifyProofFun(req, next) {
 
                                 proofData.submissionStatus = 3; //resubmission
                                 proofData.hasVerified = false;
-                            }
-                            else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
-                                await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
+                            } else if (formData.hasVerified === 'true' && formData.submissionStatus === "4") {
+                                await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async(taskData) => {
                                     if (!taskData) {
                                         reject("Task not found");
                                     } else {
-                                        await Customer.findOne({ userId: proofData.userId, isDelete: false }).then(async (userData) => {
+                                        await Customer.findOne({ userId: proofData.userId, isDelete: false }).then(async(userData) => {
                                             if (!userData) {
                                                 reject("User not found");
                                             } else {
@@ -186,11 +181,12 @@ function verifyProofFun(req, next) {
                                                 }
                                                 proofData.submissionStatus = 4; //closed
                                                 proofData.hasVerified = true;
+                                                proofData.isPaid = true;
 
                                                 userData.balance += taskData.price;
                                                 userData.totalEarned += taskData.price;
 
-                                                await userData.save().then(async () => {
+                                                await userData.save().then(async() => {
 
                                                     await Transaction.countDocuments()
                                                         .then(total => {
@@ -240,8 +236,7 @@ function verifyProofFun(req, next) {
                                     .catch(err => {
                                         reject("Error while saving proof: " + err.message);
                                     });
-                            }
-                            else {
+                            } else {
                                 proofData.save()
                                     .then(updatedRes => {
                                         resolve({
@@ -330,7 +325,7 @@ async function fetchProofById(req, res, next) {
 
 function fetchProofByIdFun(req, next) {
     let formData = req.body
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         if (formData != undefined && formData._id != undefined) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
@@ -344,18 +339,15 @@ function fetchProofByIdFun(req, next) {
                                 message: "Single Proof Loaded",
                                 data: document
                             });
-                        }
-                        else {
+                        } else {
                             reject("Proof not found");
                         }
                     })
                     .catch(next)
-            }
-            else {
+            } else {
                 reject("Id Format is Wrong")
             }
-        }
-        else {
+        } else {
             resolve("Please enter _id to Proceed ");
         }
     })
@@ -418,11 +410,9 @@ function updateProofFun(req, next) {
                         } else {
                             if (res.submissionStatus === 4) {
                                 reject("Proof cannot be updated, submission is closed.");
-                            }
-                            else if (res.submissionStatus === 2) {
+                            } else if (res.submissionStatus === 2) {
                                 reject("Proof cannot be updated, submission is in progress.");
-                            }
-                            else if (res.hasVerified === true) {
+                            } else if (res.hasVerified === true) {
                                 reject("Proof cannot be updated, it has already been verified.");
                             } else {
 
@@ -510,7 +500,7 @@ async function addAttachmentInProof(req, res, next) {
 }
 
 function addAttachmentInProofFun(req, next) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async(resolve, reject) => {
         const formData = req.body;
         const createSchema = Joi.object().keys({
             _id: Joi.string().required(),

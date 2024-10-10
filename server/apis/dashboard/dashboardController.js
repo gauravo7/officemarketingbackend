@@ -9,11 +9,11 @@ const User = require("../user/userModel")
 
 
 
-const dashboard = async (req, res) => {
+const dashboard = async(req, res) => {
     let totalCategories = await Category.countDocuments({ isDelete: false })
     let totalCustomers = await Customer.countDocuments({ isDelete: false })
-    let totalProducts = await Product.countDocuments()
-    let totalBookings = await Booking.countDocuments()
+    let pendingProofs = await Proof.countDocuments({ hasVerified: false })
+    let totalTasks = await Task.countDocuments()
 
 
     res.send({
@@ -22,11 +22,11 @@ const dashboard = async (req, res) => {
         message: 'Welcome Admin',
         totalCategories: totalCategories,
         totalCustomers: totalCustomers,
-        totalProducts: totalProducts,
-        totalBookings: totalBookings,
+        pendingProofs: pendingProofs,
+        totalTasks: totalTasks,
+
     })
 
 }
 
 module.exports = { dashboard }
-

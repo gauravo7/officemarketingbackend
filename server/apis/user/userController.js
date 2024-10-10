@@ -288,49 +288,63 @@ function updateUserFun(req, next) {
             reject("_id is required");
         } else {
             User.findOne({ "_id": formData._id })
-                .then(async res => {
-                    if (!res) {
+                .then(async userData => {
+                    if (!userData) {
                         reject("User not found");
                     } else {
-                        if (!!formData.name) res.name = formData.name
-                        if (!!formData.email) res.email = formData.email.toLowerCase()
-                        if (!!formData.phone) res.phone = formData.phone
-                        if (!!formData.password) res.password = bcrypt.hashSync(formData.password, 10);
-                        if (!!formData.role) res.role = formData.role;
-                        if (!!req.decoded.updatedById) res.updatedById = req.decoded.updatedById
-                        let id = res._id
+
+                        if (!!formData.name) userData.name = formData.name
+                        if (!!formData.email) userData.email = formData.email.toLowerCase()
+                        if (!!formData.phone) userData.phone = formData.phone
+                        if (!!formData.password) userData.password = bcrypt.hashSync(formData.password, 10);
+                        if (!!formData.role) userData.role = formData.role;
+                        if (!!req.decoded.updatedById) userData.updatedById = req.decoded.updatedById
+                        let id = userData._id
                         if (!!formData.email) {
                             await User.findOne({ $and: [{ email: formData.email }, { isDelete: false }, { _id: { $ne: id } }] }).then(existingUser => {
                                 if (existingUser != null)
                                     isValidated = false
                             })
                         }
-                        res.updatedAt = new Date();
+                        userData.updatedAt = new Date();
                         if (isValidated) {
                             res.save()
                                 .then(res => {
-                                    Customer.findOne({ "userId": formData._id }).then((customerData) => {
-                                        if (!customerData) {
-                                            reject("customer not found");
-                                        } else {
-                                            if (!!formData.name) customerData.name = formData.name
-                                            if (!!formData.email) customerData.email = formData.email.toLowerCase()
-                                            if (!!formData.phone) customerData.phone = formData.phone
-                                            if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById
-                                            customerData.updatedAt = new Date();
-                                            customerData.save().then(() => {
-                                                {
-                                                    resolve({
-                                                        status: 200,
-                                                        success: true,
-                                                        message: "User Updated Successfully",
-                                                        data: res
-                                                    })
-                                                }
+                                    if (userData.userType == 2) {
+                                        Customer.findOne({ "userId": formData._id }).then((customerData) => {
+                                            if (!customerData) {
+                                                reject("customer not found");
+                                            } else {
+                                                if (!!formData.name) customerData.name = formData.name
+                                                if (!!formData.email) customerData.email = formData.email.toLowerCase()
+                                                if (!!formData.phone) customerData.phone = formData.phone
+                                                if (!!req.decoded.updatedById) customerData.updatedById = req.decoded.updatedById
+                                                customerData.updatedAt = new Date();
+                                                customerData.save().then(() => {
+                                                    {
+                                                        resolve({
+                                                            status: 200,
+                                                            success: true,
+                                                            message: "User Updated Successfully",
+                                                            data: res
+                                                        })
+                                                    }
 
-                                            }).catch(next)
-                                        }
-                                    })
+                                                }).catch(next)
+                                            }
+                                        })
+
+                                    } else {
+
+                                        resolve({
+                                            status: 200,
+                                            success: true,
+                                            message: "User Updated Successfully",
+                                            data: res
+                                        })
+
+                                    }
+
                                 })
                                 .catch(next)
                         } else {
