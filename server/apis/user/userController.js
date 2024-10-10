@@ -12,7 +12,8 @@ module.exports = {
     fetchUserById,
     deleteUser,
     changePassword,
-    updateUser
+    updateUser,
+    addUser
 
 }
 
@@ -102,7 +103,7 @@ function indexFun(req, next) {
         User.find(find)
             .skip(skip1)
             .limit(lim)
-            .exec()
+            .exec().populate("role")
             .then(async alldocuments => {
                 let total = 0
                 total = await User.countDocuments(find)
@@ -130,7 +131,7 @@ function fetchUserByIdFun(req, next) {
         }
         else {
             let finder = { $and: [formData] };
-            User.findOne(finder)
+            User.findOne(finder).populate("role")
                 .exec()
                 .then(document => {
                     if (!!document) {
@@ -277,10 +278,10 @@ async function updateUser(req, res, next) {
 function updateUserFun(req, next) {
     let formData = req.body
     console.log(formData);
-    
+
     let isValidated = true
     return new Promise((resolve, reject) => {
-        if (!formData._id) {  
+        if (!formData._id) {
             reject("_id is required");
         }
         else {
@@ -340,4 +341,63 @@ function updateUserFun(req, next) {
         }
     });
 
+}
+
+
+
+async function addUser(req, res, next) {
+    await addUserFun(req, next).then(next).catch(next);
+}
+
+function addUserFun(req, next) {
+    return new Promise(async (resolve, reject) => {
+        const formData = req.body
+        const createSchema = Joi.object().keys({
+            name: Joi.string().required(),
+            email: Joi.string().required(),
+            password: Joi.string().required(),
+            phone: Joi.string().required(),
+        });
+        const result = createSchema.validate(formData)
+        const { value, error } = result
+        const valid = error == null
+        if (!valid) {
+            const { details } = error;
+            reject({
+                status: 400,
+                success: false,
+                message: details.map(i => i.message).join(',')
+            });
+        } else {
+            await User.findOne({ $and: [{ email: formData.email }, { isDelete: false }] }).then(userData => {
+                if (!userData) {
+
+                    User.countDocuments().then(total => {
+                        var user = new User()
+                        user.userAutoId = total + 1
+                        user.name = formData.name
+                        user.email = formData.email
+                        user.phone = formData.phone
+                        user.password = bcrypt.hashSync(formData.password, 10);
+                        user.userType = 3
+                        if (req.decoded.addedById) user.addedById = req.decoded.addedById;
+                        user.save().then((saveUser) => {
+                            resolve({
+                                status: 200, success: true, message: "User Added Successfully.", data: saveUser
+                            })
+
+                        }).catch(err => {
+
+                            reject({ success: false, status: 500, message: err })
+                        })
+                    })
+
+                } else {
+
+                    reject({ success: false, status: 422, message: "user already exists with same email" })
+                }
+
+            })
+        }
+    })
 }

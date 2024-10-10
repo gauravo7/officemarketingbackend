@@ -110,6 +110,7 @@ function redeemRequestFun(req, next) {
 
         const createSchema = Joi.object().keys({
             userId: Joi.string().required(),
+            accountDetails: Joi.string().required(),
             amount: Joi.number().required() // This already checks the minimum requirement
         });
 
@@ -152,6 +153,7 @@ function redeemRequestFun(req, next) {
                             transaction.transactionAutoId = total + 1;
                             transaction.userId = formData.userId;
                             transaction.amount = formData.amount;
+                            transaction.accountDetails = formData.accountDetails;
                             transaction.type = "debit";
                             transaction.transactionStatus = 1;
                             transaction.transactionId = null;

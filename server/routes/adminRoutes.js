@@ -33,6 +33,7 @@ router.post('/user/all', userController.index)
 router.post('/user/single', userController.fetchUserById)
 router.delete('/user/delete', userController.deleteUser)
 router.post('/user/update', userController.updateUser)
+router.post('/user/add', userController.addUser)
 
 /** User Routes Ends */
 
