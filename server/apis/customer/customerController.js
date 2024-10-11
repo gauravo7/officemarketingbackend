@@ -26,7 +26,7 @@ function addCustomerFun(req, next) {
             name: Joi.string().required(),
             email: Joi.string().required(),
             password: Joi.string().required(),
-            profile: Joi.string().required(),
+            profile: Joi.string().optional(),
             trimProfile: Joi.string().optional(),
             phone: Joi.string().required(),
             address: Joi.string().required(),
@@ -64,8 +64,7 @@ function addCustomerFun(req, next) {
                                     customer.email = formData.email
                                     customer.phone = formData.phone
                                     customer.address = formData.address
-                                    customer.profile = "profile/" + req.body.profile;
-                                    customer.trimProfile = "profile/" + req.body.trimProfile
+                     
                                     customer.save()
                                         .then(saveRes => {
                                             resolve({

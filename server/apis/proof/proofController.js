@@ -33,7 +33,7 @@ async function addProof(req, res, next) {
 
 
 function addProofFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const formData = req.body;
 
         const createSchema = Joi.object().keys({
@@ -62,7 +62,7 @@ function addProofFun(req, next) {
         } else {
 
             Task.findOne({ _id: formData.taskId })
-                .then((task) => {
+                .then(async (task) => {
                     if (!task) {
                         reject("Task not found");
                     } else {
@@ -71,43 +71,87 @@ function addProofFun(req, next) {
                             reject("Task deadline exceeded.");
                             return;
                         } else {
-                            Proof.countDocuments().then(total => {
-                                let proof = new Proof();
-                                proof.proofAutoId = total + 1;
-                                proof.taskId = formData.taskId;
-                                proof.userId = formData.userId;
-
-                                if (formData.comment) {
-                                    comment = [{
-                                        comment: formData.comment,
-                                        userId: formData.userId,
-                                        createdAt: new Date()
-                                    }]
-                                } else {
-                                    comment = []
+                            await Proof.findOne(({ $and: [{ taskId: formData.taskId }, { userId: formData.userId }] })).then((pData) => {
+                                if (pData) {
+                                    reject("Already Added.");
                                 }
-                                proof.comments = comment;
+                                else {
+                                    Proof.countDocuments().then(total => {
+                                        let proof = new Proof();
+                                        proof.proofAutoId = total + 1;
+                                        proof.taskId = formData.taskId;
+                                        proof.userId = formData.userId;
+                                        if (formData.comment) {
+                                            comment = [{
+                                                comment: formData.comment,
+                                                userId: formData.userId,
+                                                createdAt: new Date()
+                                            }]
+                                        } else {
+                                            comment = []
+                                        }
+                                        proof.comments = comment;
+                                        proof.attachments = req.files.map(file => "attachments/" + file.filename);
+                                        proof.trimAttachments = req.body.trimAttachments.map(trimFile => "attachments/" + trimFile);
+                                        if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
+                                        proof.save()
+                                            .then(async saveRes => {
+                                                await Proof.countDocuments(({ $and: [{ userId: formData.userId }, { hasVerified: true }] })).then(async (totalProofs) => {
+                                                    await Customer.findOne({ userId: formData.userId }).then((customerData) => {
 
 
-                                proof.attachments = req.files.map(file => "attachments/" + file.filename);
-                                proof.trimAttachments = req.body.trimAttachments.map(trimFile => "attachments/" + trimFile);
 
-                                if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
+                                                        if (totalProofs == 2) {
+                                                            customerData.level = 2
+                                                            customerData.save().then(() => {
+                                                                resolve({
+                                                                    status: 200,
+                                                                    success: true,
+                                                                    message: "Proof uploaded successfully your are intermediate ",
+                                                                    data: saveRes
+                                                                });
+                                                            })
+                                                        }
+                                                        else if (totalProofs == 3) {
+                                                            customerData.level = 3
+                                                            customerData.save().then(() => {
+                                                                resolve({
+                                                                    status: 200,
+                                                                    success: true,
+                                                                    message: "Proof uploaded successfully your are expert",
+                                                                    data: saveRes
+                                                                });
 
-                                proof.save()
-                                    .then(saveRes => {
-                                        resolve({
-                                            status: 200,
-                                            success: true,
-                                            message: "Proof uploaded successfully",
-                                            data: saveRes
-                                        });
-                                    })
-                                    .catch(err => {
-                                        helper.unlinkImage(req.file);
-                                        reject({ success: false, status: 500, message: err });
+                                                            })
+                                                        }
+                                                        else {
+                                                            resolve({
+                                                                status: 200,
+                                                                success: true,
+                                                                message: "Proof uploaded successfully",
+                                                                data: saveRes
+                                                            });
+                                                        }
+
+
+
+                                                    })
+
+                                                })
+
+
+                                            })
+                                            .catch(err => {
+                                                helper.unlinkImage(req.file);
+                                                reject({ success: false, status: 500, message: err });
+                                            });
                                     });
-                            });
+                                }
+
+                            })
+
+
+
                         }
                     }
                 })
@@ -164,13 +208,12 @@ function verifyProofFun(req, next) {
 
                                 proofData.submissionStatus = 3; //resubmission
                                 proofData.hasVerified = false;
-                            }
-                            else if (formData.hasVerified === 'true' && formData.submissionStatus === "4" || formData.submissionStatus === 4) {
+                            } else if (formData.hasVerified === 'true' && formData.submissionStatus === "4" || formData.submissionStatus === 4) {
                                 await Task.findOne({ _id: proofData.taskId, isDelete: false }).then(async (taskData) => {
                                     if (!taskData) {
                                         reject("Task not found");
                                     } else {
-                                        await Customer.findOne({ userId: proofData.userId, isDelete: false }).then(async(userData) => {
+                                        await Customer.findOne({ userId: proofData.userId, isDelete: false }).then(async (userData) => {
                                             if (!userData) {
                                                 reject("User not found");
                                             } else {
@@ -189,7 +232,7 @@ function verifyProofFun(req, next) {
                                                 userData.balance += taskData.price;
                                                 userData.totalEarned += taskData.price;
 
-                                                await userData.save().then(async() => {
+                                                await userData.save().then(async () => {
 
                                                     await Transaction.countDocuments()
                                                         .then(total => {
@@ -328,7 +371,7 @@ async function fetchProofById(req, res, next) {
 
 function fetchProofByIdFun(req, next) {
     let formData = req.body
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         if (formData != undefined && formData._id != undefined) {
             if (db.isValid(formData._id)) {
                 var finder = { $and: [formData] };
@@ -503,7 +546,7 @@ async function addAttachmentInProof(req, res, next) {
 }
 
 function addAttachmentInProofFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const formData = req.body;
         const createSchema = Joi.object().keys({
             _id: Joi.string().required(),
