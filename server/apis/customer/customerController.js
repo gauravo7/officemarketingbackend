@@ -29,7 +29,7 @@ function addCustomerFun(req, next) {
             profile: Joi.string().optional(),
             trimProfile: Joi.string().optional(),
             phone: Joi.string().required(),
-            address: Joi.string().required(),
+            address: Joi.string().optional(),
         });
         const result = createSchema.validate(formData)
         const { value, error } = result
