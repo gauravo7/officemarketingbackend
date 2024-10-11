@@ -28,21 +28,24 @@ function indexFun(req, next) {
             formData = req;
         }
 
-
         formData.isDelete = false;
-
 
         if (formData.startpoint != undefined) {
             skip1 = parseInt(formData.startpoint);
             delete formData.startpoint;
         }
 
-
-        const find = { $and: [formData] };
+        const find = {
+            $and: [
+                formData,
+                { dueDate: { $gte: new Date() } } 
+            ]
+        };
 
         Task.find(find)
             .skip(skip1)
-            .limit(lim).populate("categoryId")
+            .limit(lim)
+            .populate("categoryId")
             .exec()
             .then(async alldocuments => {
                 var total = await Task.countDocuments(find);

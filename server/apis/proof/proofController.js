@@ -112,6 +112,7 @@ function addProofFun(req, next) {
                                                                 });
                                                             })
                                                         }
+                                                        
                                                         else if (totalProofs == 3) {
                                                             customerData.level = 3
                                                             customerData.save().then(() => {
