@@ -96,12 +96,9 @@ router.post('/redeem/request/add', transactionController.redeemRequest);
 router.post('/task/add', myTaskController.addMyTask);
 router.post('/task/single', myTaskController.fetchMyTaskById);
 router.post('/task/my', myTaskController.index);
-
-
-router.post('/task/all', taskController.index);
-
 // My Task end ................................
 
-
+// Tasks
+router.post('/task/all', taskController.index);
 
 module.exports = router

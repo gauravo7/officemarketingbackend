@@ -31,7 +31,6 @@ async function addProof(req, res, next) {
 
 
 
-
 function addProofFun(req, next) {
     return new Promise(async (resolve, reject) => {
         const formData = req.body;
@@ -60,7 +59,6 @@ function addProofFun(req, next) {
                 message: details.map(i => i.message).join(','),
             });
         } else {
-
             Task.findOne({ _id: formData.taskId })
                 .then(async (task) => {
                     if (!task) {
@@ -71,11 +69,8 @@ function addProofFun(req, next) {
                             reject("Task deadline exceeded.");
                             return;
                         } else {
-                            await Proof.findOne(({ $and: [{ taskId: formData.taskId }, { userId: formData.userId }] })).then((pData) => {
-                                if (pData) {
-                                    reject("Already Added.");
-                                }
-                                else {
+                            await Proof.findOne({ $and: [{ taskId: formData.taskId }, { userId: formData.userId }] })
+                                .then(() => {
                                     Proof.countDocuments().then(total => {
                                         let proof = new Proof();
                                         proof.proofAutoId = total + 1;
@@ -86,9 +81,9 @@ function addProofFun(req, next) {
                                                 comment: formData.comment,
                                                 userId: formData.userId,
                                                 createdAt: new Date()
-                                            }]
+                                            }];
                                         } else {
-                                            comment = []
+                                            comment = [];
                                         }
                                         proof.comments = comment;
                                         proof.attachments = req.files.map(file => "attachments/" + file.filename);
@@ -96,70 +91,106 @@ function addProofFun(req, next) {
                                         if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
                                         proof.save()
                                             .then(async saveRes => {
-                                                await Proof.countDocuments(({ $and: [{ userId: formData.userId }, { hasVerified: true }] })).then(async (totalProofs) => {
-                                                    await Customer.findOne({ userId: formData.userId }).then((customerData) => {
-
-
-
-                                                        if (totalProofs == 2) {
-                                                            customerData.level = 2
-                                                            customerData.save().then(() => {
-                                                                resolve({
-                                                                    status: 200,
-                                                                    success: true,
-                                                                    message: "Proof uploaded successfully your are intermediate ",
-                                                                    data: saveRes
-                                                                });
-                                                            })
-                                                        }
-                                                        
-                                                        else if (totalProofs == 3) {
-                                                            customerData.level = 3
-                                                            customerData.save().then(() => {
-                                                                resolve({
-                                                                    status: 200,
-                                                                    success: true,
-                                                                    message: "Proof uploaded successfully your are expert",
-                                                                    data: saveRes
-                                                                });
-
-                                                            })
-                                                        }
-                                                        else {
-                                                            resolve({
-                                                                status: 200,
-                                                                success: true,
-                                                                message: "Proof uploaded successfully",
-                                                                data: saveRes
+                                                await Proof.countDocuments({ $and: [{ userId: formData.userId }, { hasVerified: true }] })
+                                                    .then(async (totalProofs) => {                                                         
+                                                        await Customer.findOne({ userId: formData.userId })
+                                                            .then((customerData) => {
+                                                                if (customerData) {
+                                                               
+                                                                    if (customerData.level == 3) {
+                                                                        resolve({
+                                                                            status: 200,
+                                                                            success: true,
+                                                                            message: "Proof uploaded successfully",
+                                                                            data: saveRes
+                                                                        });
+                                                                    }
+                                                                    else if (customerData.level == 2 && totalProofs == 2) {
+                                                                        resolve({
+                                                                            status: 200,
+                                                                            success: true,
+                                                                            message: "Proof uploaded successfully",
+                                                                            data: saveRes
+                                                                        });
+                                                                    } else if (customerData.level == 2 && totalProofs == 3) {
+                                                                        customerData.level = 3;
+                                                                        customerData.save().then(() => {
+                                                                            resolve({
+                                                                                status: 200,
+                                                                                success: true,
+                                                                                message: "Congrats, you are now an Expert!",
+                                                                                data: saveRes
+                                                                            });
+                                                                        });
+                                                                    } else if (totalProofs == 2) {
+                                                                        customerData.level = 2;
+                                                                        customerData.save().then(() => {
+                                                                            resolve({
+                                                                                status: 200,
+                                                                                success: true,
+                                                                                message: "Congrats, you've moved up to Intermediate! Keep going!",
+                                                                                data: saveRes
+                                                                            });
+                                                                        });
+                                                                    } else if (totalProofs == 3) {
+                                                                        customerData.level = 3;
+                                                                        customerData.save().then(() => {
+                                                                            resolve({
+                                                                                status: 200,
+                                                                                success: true,
+                                                                                message: "Congrats, you are now an Expert!",
+                                                                                data: saveRes
+                                                                            });
+                                                                        });
+                                                                    } else {
+                                                                        resolve({
+                                                                            status: 200,
+                                                                            success: true,
+                                                                            message: "Proof uploaded successfully",
+                                                                            data: saveRes
+                                                                        });
+                                                                    }
+                                                                }
+                                                                else {
+                                                                    reject("Customer Not Found");
+                                                                }
                                                             });
-                                                        }
-
-
-
-                                                    })
-
-                                                })
-
-
+                                                    });
                                             })
                                             .catch(err => {
+                                        
                                                 helper.unlinkImage(req.file);
-                                                reject({ success: false, status: 500, message: err });
+                                                reject({
+                                                    success: false,
+                                                    status: 500,
+                                                    message: err.message || "An unknown error occurred while saving the proof."
+                                                });
                                             });
                                     });
-                                }
+                                })
+                                .catch(err => {
 
-                            })
-
-
-
+                                    reject({
+                                        success: false,
+                                        status: 500,
+                                        message: err.message || "An unknown error occurred while finding the proof."
+                                    });
+                                });
                         }
                     }
                 })
-                .catch(next);
+                .catch(err => {
+                    
+                    reject({
+                        success: false,
+                        status: 500,
+                        message: err.message || "An unknown error occurred while finding the task."
+                    });
+                });
         }
     });
 }
+
 
 
 
