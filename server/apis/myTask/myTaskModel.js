@@ -6,6 +6,7 @@ var myTask = mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', default: null },
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'customer', default: null },
     taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'task', default: null },
+    proofId: { type: mongoose.Schema.Types.ObjectId, ref: 'proof', default: null },
 
     isDelete: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },

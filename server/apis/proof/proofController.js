@@ -1,5 +1,6 @@
 const Proof = require('./proofModel')
 const Customer = require('../customer/customerModel')
+const myTask = require('../myTask/myTaskModel')
 const Transaction = require('../transaction/transactionModel')
 const Task = require('../task/taskModel')
 const Joi = require('joi')
@@ -96,6 +97,10 @@ function addProofFun(req, next) {
                                             if (req.decoded.addedById) proof.addedById = req.decoded.addedById;
                                             proof.save()
                                                 .then(async saveRes => {
+
+                                                    let mTask = await myTask.findOne({ taskId: formData.taskId })
+                                                    mTask.proofId = saveRes._id
+                                                    mTask.save()
                                                     await Proof.countDocuments({ $and: [{ userId: formData.userId }, { hasVerified: true }] })
                                                         .then(async (totalProofs) => {
                                                             await Customer.findOne({ userId: formData.userId })
