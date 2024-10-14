@@ -78,6 +78,7 @@ router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments',
     await trimAttachments(req);
     next();
 }, proofController.addAttachmentInProof);
+router.post('/proof/all', proofController.index)
 // Proof Ends.............................................
 
 
