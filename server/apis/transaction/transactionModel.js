@@ -6,6 +6,7 @@ const transactionSchema = new Schema({
     transactionId: { type: String },
 
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
+    
     customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'customer', },
 
     type: { type: String, required: true },

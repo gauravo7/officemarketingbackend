@@ -31,7 +31,7 @@ function loginFun(req, next) {
     const result = loginSchema.validate(body)
     const { value, error } = result;
     const valid = error == null
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         if (!valid) {
             const { details } = error;
             reject({
@@ -130,13 +130,13 @@ async function fetchUserById(req, res, next) {
 };
 
 function fetchUserByIdFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         let formData = req.body
         if (!formData._id) {
             reject("_id is required")
         } else {
             let finder = { $and: [formData] };
-            User.findOne(finder).populate("role")
+            User.findOne(finder).populate("role").populate("customerId")
                 .exec()
                 .then(document => {
                     if (!!document) {
@@ -365,7 +365,7 @@ async function addUser(req, res, next) {
 }
 
 function addUserFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const formData = req.body
         const createSchema = Joi.object().keys({
             name: Joi.string().required(),

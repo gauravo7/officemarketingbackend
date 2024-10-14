@@ -24,16 +24,16 @@ async function trim(req) {
         }
     }
 }
-router.post('/register', helper.uploadImageFun.single('profile'), async(req, res, next) => {
+router.post('/register', helper.uploadImageFun.single('profile'), async (req, res, next) => {
     await trim(req);
     next();
 }, customerController.addCustomer);
 
 // Middleware..............................
 router.use(require('../middleware/tokenChecker'))
-    // Middleware..............................
+// Middleware..............................
 
-router.post('/update', helper.uploadImageFun.single('profile'), async(req, res, next) => {
+router.post('/update', helper.uploadImageFun.single('profile'), async (req, res, next) => {
     await trim(req);
     next();
 }, customerController.updateCustomer);
@@ -66,15 +66,15 @@ async function trimAttachments(req) {
         }
     }
 }
-router.post('/proof/update', helper.uploadImageFun.single('attachments'), async(req, res, next) => {
+router.post('/proof/update', helper.uploadImageFun.single('attachments'), async (req, res, next) => {
     await trimAttachments(req);
     next();
 }, proofController.updateProof);
-router.post('/proof/add', helper.uploadImageFun.array('attachments', 10), async(req, res, next) => {
+router.post('/proof/add', helper.uploadImageFun.array('attachments', 10), async (req, res, next) => {
     await trimAttachments(req);
     next();
 }, proofController.addProof);
-router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments', 10), async(req, res, next) => {
+router.post('/proof/attachments/add', helper.uploadImageFun.array('attachments', 10), async (req, res, next) => {
     await trimAttachments(req);
     next();
 }, proofController.addAttachmentInProof);
@@ -85,6 +85,7 @@ router.post('/proof/all', proofController.index)
 
 // Transaction............................................
 router.post('/redeem/request/add', transactionController.redeemRequest);
+router.post('/transaction/all', transactionController.index)
 // Transactions End..........................................
 
 

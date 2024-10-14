@@ -19,7 +19,7 @@ async function addCustomer(req, res, next) {
 }
 
 function addCustomerFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         const formData = req.body
         console.log(formData)
         const createSchema = Joi.object().keys({
@@ -64,9 +64,10 @@ function addCustomerFun(req, next) {
                                     customer.email = formData.email
                                     customer.phone = formData.phone
                                     customer.address = formData.address
-                     
                                     customer.save()
                                         .then(saveRes => {
+                                            user.customerId = saveRes._id
+                                            user.save()
                                             resolve({
                                                 status: 200,
                                                 success: true,
@@ -141,7 +142,7 @@ async function fetchCustomerById(req, res, next) {
 };
 
 function fetchCustomerByIdFun(req, next) {
-    return new Promise(async(resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         let formData = req.body
         if (!formData._id) {
             reject("_id is required")

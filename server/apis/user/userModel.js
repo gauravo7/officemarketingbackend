@@ -12,6 +12,7 @@ var userSchema = mongoose.Schema({
     password: { type: String, default: '' },
     isDelete: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
+    customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'customer' },
     addedById: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },
     updatedById: { type: mongoose.Schema.Types.ObjectId, default: null, ref: 'user' },
     createdAt: { type: Date, default: Date.now },
