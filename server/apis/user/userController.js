@@ -136,7 +136,10 @@ function fetchUserByIdFun(req, next) {
             reject("_id is required")
         } else {
             let finder = { $and: [formData] };
-            User.findOne(finder).populate("role").populate("customerId")
+            User.findOne(finder).populate("role") .populate({
+                path: 'customerId',
+                select: 'balance totalEarned totalWithdrawn pendingRequests level'
+              })
                 .exec()
                 .then(document => {
                     if (!!document) {
