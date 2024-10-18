@@ -16,7 +16,7 @@ async function trim(req) {
     if (req && req.file && req.file.path) {
         const trimmedFileName = "trim_" + req.body.profile;
         try {
-            await sharp(req.file.path).resize(100).jpeg({ quality: 80 }).toFile(path.join(req.file.destination, trimmedFileName));
+            await sharp(req.file.path).resize(100,100).jpeg({ quality: 80 }).toFile(path.join(req.file.destination, trimmedFileName));
             req.body.trimProfile = trimmedFileName;
         } catch (err) {
             console.error('Error processing the image:', err);
@@ -58,7 +58,7 @@ async function trimAttachments(req) {
         const trimmedFileName = "trim_" + req.file.filename;
         const trimmedFilePath = path.join(req.file.destination, trimmedFileName);
         try {
-            await sharp(req.file.path).resize(100).jpeg({ quality: 80 }).toFile(trimmedFilePath);
+            await sharp(req.file.path).resize(100,100).jpeg({ quality: 80 }).toFile(trimmedFilePath);
             req.body.trimAttachments = trimmedFileName;
         } catch (err) {
             console.error('Error processing file:', err);

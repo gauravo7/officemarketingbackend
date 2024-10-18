@@ -64,6 +64,7 @@ router.delete('/category/delete', categoryController.deleteCategory)
 // Products
 router.post('/task/add', taskController.addTask)
 router.post('/task/all', taskController.index)
+router.post('/task/allMini', taskController.indexMinify)
 router.post('/task/single', taskController.fetchTaskById)
 router.post('/task/update', taskController.updateTask)
 router.delete('/task/delete', taskController.deleteTask)

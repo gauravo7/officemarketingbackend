@@ -9,7 +9,8 @@ module.exports = {
     fetchTaskById,
     addTask,
     updateTask,
-    deleteTask
+    deleteTask,
+    indexMinify
 }
 
 async function index(req, res, next) {
@@ -34,14 +35,28 @@ function indexFun(req, next) {
             skip1 = parseInt(formData.startpoint);
             delete formData.startpoint;
         }
+        let filter = [formData];
+        if(formData.dueDate!=undefined) {
+            delete formData.dueDate;
+            filter.push({dueDate: { $gte: new Date() }})
+            // find = {
+            //     $and: [
+            //         formData,
+            //         { dueDate: { $gte: new Date() } } 
+            //     ]
+            // };
+        } 
+        if( formData.level!=undefined) {
+            let level = formData.level;
+            delete formData.level;
+            filter.push({ level: { $lte:level}})
+        }
 
-        const find = {
-            $and: [
-                formData,
-                { dueDate: { $gte: new Date() } } 
-            ]
-        };
+        let find = {
+                $and: filter
+            }; 
 
+            console.log(find);
         Task.find(find)
             .skip(skip1)
             .limit(lim)
@@ -64,6 +79,34 @@ function indexFun(req, next) {
 }
 
 
+async function indexMinify(req, res, next) {
+    await indexFunMinify(req, next).then(next).catch(next);
+};
+
+function indexFunMinify(req, next) {
+    return new Promise((resolve, reject) => {
+       
+        let formData = req.body;
+        formData.isDelete = false;
+        console.log(formData);
+        Task.find(formData,'_id title dueDate level')
+            .then(async alldocuments => {
+               
+                resolve({
+                    status: 200,
+                    success: true,
+                    message: "All Tasks Loaded",
+                    data: alldocuments
+                });
+            })
+            .catch(err => {
+                reject({ success: false, status: 500, message: err.message });
+            });
+    });
+}
+
+
+
 
 
 async function addTask(req, res, next) {
@@ -78,9 +121,10 @@ function addTaskFun(req, next) {
         const createSchema = Joi.object().keys({
             title: Joi.string().required(),
             description: Joi.string().optional().default('No description'),
-            categoryId: Joi.string().required().optional(),
+            categoryId: Joi.optional(),
             price: Joi.number().required(),
-            dueDate: Joi.date().required()
+            dueDate: Joi.date().required(),
+            level: Joi.number().required()
         });
 
         const result = createSchema.validate(formData);
@@ -102,9 +146,10 @@ function addTaskFun(req, next) {
                     task.taskAutoId = total + 1;
                     task.title = formData.title;
                     task.description = formData.description || 'No description';
-                    task.categoryId = formData.categoryId;
+                    // task.categoryId = formData.categoryId;
                     task.price = formData.price;
                     task.dueDate = formData.dueDate;
+                    task.level = formData.level;
 
                     if (req.decoded.addedById) task.addedById = req.decoded.addedById;
 

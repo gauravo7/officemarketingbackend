@@ -43,7 +43,7 @@ function loginFun(req, next) {
             let finder = {}
             if (!!body.email)
                 finder = { email: body.email.toLowerCase() }
-            User.findOne(finder).populate("role").then(res => {
+            User.findOne(finder).populate('customerId','level').populate("role").then(res => {
                 if (!!res) {
                     if (!bcrypt.compareSync(body.password, res.password)) {
                         reject("Invalid Username Password")

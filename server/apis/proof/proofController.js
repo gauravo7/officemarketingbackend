@@ -98,9 +98,9 @@ function addProofFun(req, next) {
                                             proof.save()
                                                 .then(async saveRes => {
 
-                                                    let mTask = await myTask.findOne({ taskId: formData.taskId })
+                                                    let mTask = await myTask.findOne({$and:[{ taskId: formData.taskId },{ userId:formData.userId}]})
                                                     mTask.proofId = saveRes._id
-                                                    mTask.save()
+                                                    await mTask.save();
                                                     await Proof.countDocuments({ $and: [{ userId: formData.userId }, { hasVerified: true }] })
                                                         .then(async (totalProofs) => {
                                                             await Customer.findOne({ userId: formData.userId })
@@ -601,7 +601,8 @@ function addAttachmentInProofFun(req, next) {
             trimAttachments: Joi.alternatives().try(
                 Joi.array().items(Joi.string().required()).min(1),
                 Joi.string().optional()
-            ).optional()
+            ).optional(),
+            comment: Joi.string().optional()
         });
 
         const result = createSchema.validate(formData);
@@ -652,6 +653,13 @@ function addAttachmentInProofFun(req, next) {
 
                             if (!!req.decoded.updatedById) proof.updatedById = req.decoded.updatedById;
                             proof.updatedAt = new Date();
+                            proof.submissionStatus = 1;
+                            if(formData.comment!='') {
+                                proof.comments.push({
+                                    comment : formData.comment,
+                                    userId : req.decoded.updatedById
+                                });
+                            }
 
                             proof.save()
                                 .then(updatedProof => {
