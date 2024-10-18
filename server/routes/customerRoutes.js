@@ -102,5 +102,12 @@ router.post('/task/my', myTaskController.index);
 
 // Tasks
 router.post('/task/all', taskController.index);
+router.post('/fetchWallet', customerController.index)
+
+
+
+//  customer info
+router.post('/customer/all', customerController.index)
+
 
 module.exports = router

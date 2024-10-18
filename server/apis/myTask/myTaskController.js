@@ -147,7 +147,7 @@ function indexFun(req, next) {
         }
         var find = { $and: [formData] }
 
-        myTask.find(find).populate("userId").populate("taskId")
+        myTask.find(find).populate("userId").populate("taskId").populate("proofId")
             .skip(skip1)
             .limit(lim)
             .exec()

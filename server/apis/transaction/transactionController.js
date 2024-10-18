@@ -128,7 +128,7 @@ function redeemRequestFun(req, next) {
                 if (!customerData) {
                     reject("Customer not found");
                 } else {
-                    if (formData.amount < 500) {
+                    if (formData.amount < 5) {
                         reject({
                             status: 400,
                             success: false,
