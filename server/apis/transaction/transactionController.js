@@ -37,7 +37,7 @@ function indexFun(req, next) {
         }
         var find = { $and: [formData] }
 
-        Transaction.find(find).populate("customerId").populate("userId").populate("updatedById",'name')
+        Transaction.find(find).populate("customerId").populate("userId").populate("updatedById",'name').populate("addedById",'name')
             .skip(skip1)
             .limit(lim)
             .exec()
